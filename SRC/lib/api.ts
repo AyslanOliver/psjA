@@ -1,5 +1,5 @@
 // Configuração da API local
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
+declare const process: { env: { NODE_ENV?: string } }; const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://delivery-api-xxx.onrender.com/api'  // URL do Render quando em produção
   : 'http://localhost:3001/api'  // API local
 
@@ -86,7 +86,7 @@ class ApiClient {
 
   async updatePedidoStatus(id: string, status: string) {
     return this.request(`/pedidos/${id}/status`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify({ status }),
     })
   }
@@ -147,7 +147,12 @@ export const lumi = {
   entities: {
     produtos: {
       list: async (options: any = {}) => {
-        const response = await api.getProdutos(options.sort ? { sortBy: Object.keys(options.sort)[0], sortOrder: Object.values(options.sort)[0] === -1 ? 'desc' : 'asc' } : {})
+        const params = options.sort ? { 
+          sortBy: Object.keys(options.sort)[0], 
+          sortOrder: Object.values(options.sort)[0] === -1 ? 'desc' : 'asc',
+          limit: 1000 // Buscar todos os produtos
+        } : { limit: 1000 }
+        const response = await api.getProdutos(params)
         return { list: response.produtos || [] }
       },
       create: async (produto: any) => {

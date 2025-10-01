@@ -87,70 +87,172 @@ router.post('/', async (req, res) => {
   try {
     const {
       cliente,
+      clienteNome,
+      clienteTelefone,
+      clienteEmail,
+      enderecoEntrega,
+      itens,
       items,
       endereco,
       formaPagamento,
       taxaEntrega = 5.00,
       troco,
+      trocoParaValor,
       observacoes,
-      tempoEstimado = 30
+      observacoesPedido,
+      tempoEstimado = 30,
+      tempoEstimadoMinutos = 30
     } = req.body;
 
-    // Validar cliente
-    const clienteExistente = await Cliente.findById(cliente);
-    if (!clienteExistente) {
-      return res.status(400).json({ message: 'Cliente não encontrado' });
+    let clienteId = cliente;
+
+    // Se não foi fornecido um ID de cliente, mas temos dados do cliente, criar automaticamente
+    if (!clienteId && (clienteNome || clienteTelefone)) {
+      try {
+        // Formatar telefone para o padrão esperado pelo modelo
+        let telefoneFormatado = clienteTelefone;
+        if (clienteTelefone && !clienteTelefone.includes('(')) {
+          // Converter de "75983124585" para "(75) 98312-4585"
+          const digits = clienteTelefone.replace(/\D/g, '');
+          if (digits.length === 11) {
+            telefoneFormatado = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+          } else if (digits.length === 10) {
+            telefoneFormatado = `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+          }
+        }
+
+        // Verificar se já existe um cliente com esse telefone
+        let clienteExistente = await Cliente.findOne({ 
+          $or: [
+            { telefone: telefoneFormatado },
+            { telefone: clienteTelefone }
+          ]
+        });
+        
+        if (!clienteExistente) {
+          // Criar novo cliente
+          const dadosCliente = {
+            nome: clienteNome || 'Cliente',
+            telefone: telefoneFormatado
+          };
+
+          // Só adicionar email se não estiver vazio
+          if (clienteEmail && clienteEmail.trim() !== '') {
+            dadosCliente.email = clienteEmail;
+          }
+
+          // Adicionar endereço apenas se tiver dados válidos
+          if (enderecoEntrega && enderecoEntrega.rua && enderecoEntrega.bairro && enderecoEntrega.cidade && enderecoEntrega.cep) {
+            dadosCliente.enderecos = [{
+              nome: 'Principal',
+              rua: enderecoEntrega.rua,
+              numero: enderecoEntrega.numero || 'S/N',
+              complemento: enderecoEntrega.complemento || '',
+              bairro: enderecoEntrega.bairro,
+              cidade: enderecoEntrega.cidade,
+              cep: enderecoEntrega.cep,
+              referencia: enderecoEntrega.referencia || '',
+              principal: true
+            }];
+          }
+
+          const novoCliente = new Cliente(dadosCliente);
+          
+          await novoCliente.save();
+          clienteId = novoCliente._id;
+        } else {
+          clienteId = clienteExistente._id;
+        }
+      } catch (clienteError) {
+        console.error('Erro ao criar cliente:', clienteError);
+        return res.status(400).json({ message: 'Erro ao processar dados do cliente' });
+      }
     }
 
+    // Validar cliente final
+    if (clienteId) {
+      const clienteExistente = await Cliente.findById(clienteId);
+      if (!clienteExistente) {
+        return res.status(400).json({ message: 'Cliente não encontrado' });
+      }
+    } else {
+      return res.status(400).json({ message: 'Dados do cliente são obrigatórios' });
+    }
+
+    // Usar itens ou items (compatibilidade)
+    const itemsPedido = itens || items || [];
+    
     // Validar produtos e calcular valores
     let valorSubtotal = 0;
     const itemsValidados = [];
 
-    for (const item of items) {
-      const produto = await Produto.findById(item.produto);
-      if (!produto) {
-        return res.status(400).json({ message: `Produto ${item.produto} não encontrado` });
-      }
-      if (!produto.disponivel) {
-        return res.status(400).json({ message: `Produto ${produto.nome} não está disponível` });
-      }
+    for (const item of itemsPedido) {
+      // Para pizzas, não validar produto no banco
+      if (item.produtoId && item.produtoId.startsWith('pizza-')) {
+        const itemValidado = {
+          produto: new mongoose.Types.ObjectId(), // Gerar ObjectId temporário para pizzas
+          nome: item.nome,
+          preco: item.precoUnitario,
+          quantidade: item.quantidade,
+          observacoes: item.observacoes,
+          sabor: item.sabores ? item.sabores.join(', ') : undefined,
+          tamanho: item.tamanho
+        };
 
-      const itemValidado = {
-        produto: produto._id,
-        nome: produto.nome,
-        preco: produto.preco,
-        quantidade: item.quantidade,
-        observacoes: item.observacoes
-      };
+        valorSubtotal += item.precoTotal;
+        itemsValidados.push(itemValidado);
+      } else {
+        // Para outros produtos, validar no banco
+        const produto = await Produto.findById(item.produtoId || item.produto);
+        if (!produto) {
+          return res.status(400).json({ message: `Produto ${item.produtoId || item.produto} não encontrado` });
+        }
+        if (!produto.disponivel) {
+          return res.status(400).json({ message: `Produto ${produto.nome} não está disponível` });
+        }
 
-      // Adicionar sabor e tamanho se fornecidos
-      if (item.sabor) {
-        itemValidado.sabor = item.sabor;
-      }
-      if (item.tamanho) {
-        itemValidado.tamanho = item.tamanho;
-      }
-      if (item.tamanhoDetalhes) {
-        itemValidado.tamanhoDetalhes = item.tamanhoDetalhes;
-      }
+        const itemValidado = {
+          produto: produto._id,
+          nome: produto.nome,
+          preco: produto.preco,
+          quantidade: item.quantidade,
+          observacoes: item.observacoes
+        };
 
-      valorSubtotal += produto.preco * item.quantidade;
-      itemsValidados.push(itemValidado);
+        // Adicionar sabor e tamanho se fornecidos
+        if (item.sabor) {
+          itemValidado.sabor = item.sabor;
+        }
+        if (item.tamanho) {
+          itemValidado.tamanho = item.tamanho;
+        }
+        if (item.tamanhoDetalhes) {
+          itemValidado.tamanhoDetalhes = item.tamanhoDetalhes;
+        }
+
+        valorSubtotal += produto.preco * item.quantidade;
+        itemsValidados.push(itemValidado);
+      }
     }
 
     const valorTotal = valorSubtotal + taxaEntrega;
 
     const pedido = new Pedido({
-      cliente,
+      cliente: clienteId,
       items: itemsValidados,
-      endereco,
+      endereco: {
+        rua: enderecoEntrega?.rua || endereco?.rua || '',
+        numero: enderecoEntrega?.numero || endereco?.numero || 'S/N',
+        complemento: enderecoEntrega?.complemento || endereco?.complemento || '',
+        referencia: enderecoEntrega?.referencia || endereco?.referencia || ''
+      },
       formaPagamento,
       valorSubtotal,
       taxaEntrega,
       valorTotal,
-      troco,
-      observacoes,
-      tempoEstimado
+      troco: trocoParaValor || troco,
+      observacoes: observacoesPedido || observacoes,
+      tempoEstimado: tempoEstimadoMinutos || tempoEstimado
     });
 
     await pedido.save();
@@ -160,7 +262,7 @@ router.post('/', async (req, res) => {
     ]);
 
     // Atualizar estatísticas do cliente
-    await Cliente.findByIdAndUpdate(cliente, {
+    await Cliente.findByIdAndUpdate(clienteId, {
       $inc: { totalPedidos: 1, valorTotalGasto: valorTotal },
       ultimoPedido: new Date()
     });

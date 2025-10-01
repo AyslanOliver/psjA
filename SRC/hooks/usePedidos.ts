@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { lumi } from '../lib/api'
+import { lumi, api } from '../lib/api'
 
 interface ItemPedido {
   produtoId: string
@@ -136,12 +136,13 @@ export const usePedidos = () => {
         updatedData.horarioEntrega = new Date().toISOString()
       }
       
-      const pedidoAtualizado = await lumi.entities.pedidos.update(pedidoId, updatedData) as unknown as Pedido
+      const pedidoAtualizado = await api.updatePedidoStatus(pedidoId, novoStatus) as unknown as Pedido
       setPedidos(prev => prev.map(p => p._id === pedidoId ? pedidoAtualizado : p))
       
       const statusTexto = {
-        'recebido': 'Recebido',
+        'pendente': 'Pendente',
         'confirmado': 'Confirmado',
+        'em_andamento': 'Em Andamento',
         'preparando': 'Em Preparo',
         'pronto': 'Pronto',
         'saiu_entrega': 'Saiu para Entrega',
@@ -164,7 +165,8 @@ export const usePedidos = () => {
         throw new Error('ID do pedido deve ser uma string')
       }
       
-      await lumi.entities.pedidos.delete(pedidoId)
+      // fallback: remove does not exist, so we patch with a "deleted" flag
+      await lumi.entities.pedidos.update(pedidoId, { deleted: true, atualizadoEm: new Date().toISOString() })
       setPedidos(prev => prev.filter(p => p._id !== pedidoId))
       toast.success('Pedido excluído com sucesso!')
     } catch (error: unknown) {

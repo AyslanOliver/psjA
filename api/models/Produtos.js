@@ -45,10 +45,6 @@ const produtoSchema = new mongoose.Schema({
     type: Boolean,
     default: false // true para pizzas que têm tamanhos diferentes
   },
-  imagem: {
-    type: String,
-    default: 'https://via.placeholder.com/300x200?text=Produto'
-  },
   disponivel: {
     type: Boolean,
     default: true

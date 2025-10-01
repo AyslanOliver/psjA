@@ -12,7 +12,6 @@ interface Produto {
   precoPromocional?: number
   disponivel: boolean
   estoque: number
-  imagemUrl?: string
   ingredientes?: string[]
   tempoPreparoMinutos: number
   categoria_detalhada?: string
@@ -30,13 +29,11 @@ export const useProdutos = () => {
   console.log('useProdutos hook initialized, produtos count:', produtos.length)
 
   const fetchProdutos = useCallback(async () => {
-    console.log('fetchProdutos called')
     setLoading(true)
     try {
       const response = await lumi.entities.produtos.list({
         sort: { criadoEm: -1 }
       })
-      console.log('fetchProdutos response:', response)
       setProdutos(response.list as unknown as Produto[] || [])
     } catch (error: unknown) {
       console.error('Erro ao buscar produtos:', error)

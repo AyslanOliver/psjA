@@ -50,13 +50,11 @@ const pedidoSchema = new mongoose.Schema({
     rua: { type: String, required: true },
     numero: { type: String, required: true },
     complemento: String,
-    bairro: { type: String, required: true },
-    cidade: { type: String, required: true },
-    cep: { type: String, required: true }
+    referencia: String
   },
   status: {
     type: String,
-    enum: ['pendente', 'confirmado', 'preparando', 'saiu_entrega', 'entregue', 'cancelado'],
+    enum: ['pendente', 'em_andamento', 'confirmado', 'preparando', 'pronto', 'saiu_entrega', 'entregue', 'cancelado'],
     default: 'pendente'
   },
   entregador: {

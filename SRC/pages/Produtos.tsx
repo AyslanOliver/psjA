@@ -1,14 +1,21 @@
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useProdutos } from '../hooks/useProdutos'
+import { PIZZA_PRICING_CONFIG, getPizzaPrice, isSaborEspecial, getTamanhosDisponiveis } from '../config/pizzaPricing'
 
 const Produtos: React.FC = () => {
-  const { produtos, loading, createProduto, updateProduto, deleteProduto, toggleDisponibilidade } = useProdutos()
+  const { produtos, loading, createProduto, updateProduto, deleteProduto, toggleDisponibilidade, fetchProdutos } = useProdutos()
+  
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [busca, setBusca] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
+
+  // Forçar carregamento dos produtos quando o componente monta
+  useEffect(() => {
+    fetchProdutos()
+  }, [fetchProdutos])
 
   // Form state for new product
   const [formData, setFormData] = useState({
@@ -19,7 +26,6 @@ const Produtos: React.FC = () => {
     precoPromocional: '',
     disponivel: true,
     estoque: '',
-    imagemUrl: '',
     ingredientes: '',
     tempoPreparoMinutos: '',
     categoria_detalhada: '',
@@ -27,6 +33,43 @@ const Produtos: React.FC = () => {
     temVariacoes: false,
     tamanhos: []
   })
+
+  // Efeito para aplicar preços automáticos quando categoria for pizza
+  useEffect(() => {
+    if (formData.categoria === 'pizzas') {
+      // Automaticamente marcar como tendo variações para pizzas
+      if (!formData.temVariacoes) {
+        setFormData(prev => ({
+          ...prev,
+          temVariacoes: true,
+          tamanhos: getTamanhosDisponiveis().map(t => ({
+            nome: t.nome,
+            preco: t.preco.toString(),
+            descricao: t.descricao || ''
+          }))
+        }))
+      }
+    }
+  }, [formData.categoria])
+
+  // Efeito para atualizar preços quando sabor muda (para sabores especiais)
+  useEffect(() => {
+    if (formData.categoria === 'pizzas' && formData.sabor && formData.temVariacoes) {
+      const novosPrecos = formData.tamanhos.map(tamanho => {
+        const precoAtualizado = getPizzaPrice(tamanho.nome, formData.sabor)
+        return {
+          ...tamanho,
+          preco: precoAtualizado.toString()
+        }
+      })
+      
+      setFormData(prev => ({
+        ...prev,
+        nome: `Pizza ${formData.sabor}`,
+        tamanhos: novosPrecos
+      }))
+    }
+  }, [formData.sabor, formData.categoria])
 
   const categorias = [
     { value: 'pizzas', label: 'Pizzas', icon: '🍕' },
@@ -42,6 +85,8 @@ const Produtos: React.FC = () => {
     const matchBusca = !busca || produto.nome.toLowerCase().includes(busca.toLowerCase())
     return matchCategoria && matchBusca
   })
+
+
 
   const getCategoriaInfo = (categoria: string) => {
     const cat = categorias.find(c => c.value === categoria)
@@ -64,7 +109,6 @@ const Produtos: React.FC = () => {
       precoPromocional: produto.precoPromocional?.toString() || '',
       disponivel: produto.disponivel ?? true,
       estoque: produto.estoque?.toString() || '',
-      imagemUrl: produto.imagemUrl || '',
       ingredientes: produto.ingredientes?.join(', ') || '',
       tempoPreparoMinutos: produto.tempoPreparoMinutos?.toString() || '',
       categoria_detalhada: produto.categoria_detalhada || '',
@@ -91,7 +135,6 @@ const Produtos: React.FC = () => {
       precoPromocional: '',
       disponivel: true,
       estoque: '',
-      imagemUrl: '',
       ingredientes: '',
       tempoPreparoMinutos: '',
       categoria_detalhada: '',
@@ -114,28 +157,52 @@ const Produtos: React.FC = () => {
     e.preventDefault()
     
     // Validação básica
-    if (!formData.nome || !formData.categoria || !formData.preco) {
-      alert('Por favor, preencha os campos obrigatórios: Nome, Categoria e Preço.')
+    if (!formData.categoria) {
+      alert('Por favor, selecione uma categoria.')
       return
     }
 
-    if (parseFloat(formData.preco) <= 0) {
-      alert('O preço deve ser maior que zero.')
-      return
+    // Para pizzas, validar sabor (que será usado como nome)
+    if (formData.categoria === 'pizzas') {
+      if (!formData.sabor) {
+        alert('Por favor, preencha o sabor da pizza.')
+        return
+      }
+    } else {
+      // Para produtos que não são pizzas, validar nome e preço
+      if (!formData.nome) {
+        alert('Por favor, preencha o nome do produto.')
+        return
+      }
+      
+      if (!formData.preco) {
+        alert('Por favor, preencha o preço do produto.')
+        return
+      }
+
+      if (parseFloat(formData.preco) <= 0) {
+        alert('O preço deve ser maior que zero.')
+        return
+      }
     }
 
     setIsSubmitting(true)
     
     try {
       const produtoData = {
-        nome: formData.nome,
+        // Para pizzas, usar "Pizza [Sabor]" como nome, para outros produtos usar o nome manual
+        nome: formData.categoria === 'pizzas' 
+          ? `Pizza ${formData.sabor}`
+          : formData.nome,
         descricao: formData.descricao || undefined,
         categoria: formData.categoria,
-        preco: parseFloat(formData.preco),
+        // Para pizzas, usar preço do primeiro tamanho como referência, para outros produtos usar o preço manual
+        preco: formData.categoria === 'pizzas' 
+          ? (formData.tamanhos.length > 0 ? parseFloat(formData.tamanhos[0].preco) : 0)
+          : parseFloat(formData.preco),
         precoPromocional: formData.precoPromocional ? parseFloat(formData.precoPromocional) : undefined,
         disponivel: formData.disponivel,
         estoque: formData.estoque ? parseInt(formData.estoque) : 0,
-        imagemUrl: formData.imagemUrl || undefined,
         ingredientes: formData.ingredientes ? formData.ingredientes.split(',').map(i => i.trim()).filter(i => i) : undefined,
         tempoPreparoMinutos: formData.tempoPreparoMinutos ? parseInt(formData.tempoPreparoMinutos) : 15,
         categoria_detalhada: formData.categoria_detalhada || undefined,
@@ -321,12 +388,7 @@ const Produtos: React.FC = () => {
                 const categoriaInfo = getCategoriaInfo(produto.categoria)
                 return (
                   <div key={produto._id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                    <div className="relative">
-                      <img
-                        src={produto.imagemUrl || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'}
-                        alt={produto.nome}
-                        className="w-full h-48 object-cover"
-                      />
+                    <div className="relative bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
                       <div className="absolute top-2 right-2">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           produto.disponivel 
@@ -340,6 +402,13 @@ const Produtos: React.FC = () => {
                         <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white bg-opacity-90 rounded-full">
                           {categoriaInfo.icon} {categoriaInfo.label}
                         </span>
+                      </div>
+                      
+                      {/* Ícone do produto no centro */}
+                      <div className="flex items-center justify-center h-32">
+                        <div className="text-6xl">
+                          {categoriaInfo.icon}
+                        </div>
                       </div>
                     </div>
 
@@ -479,21 +548,42 @@ const Produtos: React.FC = () => {
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nome do Produto */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome do Produto *
-                </label>
-                <input
-                  type="text"
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: Pizza Margherita"
-                  required
-                />
-              </div>
+              {/* Nome do Produto - Para pizzas, usar sabor como nome */}
+              {formData.categoria !== 'pizzas' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome do Produto *
+                  </label>
+                  <input
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ex: Hambúrguer Especial"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Para pizzas, mostrar informação sobre nome automático */}
+              {formData.categoria === 'pizzas' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm text-blue-800 font-medium">
+                      Nome automático: O sabor será usado como nome do produto
+                    </span>
+                  </div>
+                  {formData.sabor && (
+                    <p className="text-sm text-blue-700 mt-1 ml-7">
+                      Nome atual: <strong>Pizza {formData.sabor}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Categoria */}
               <div>
@@ -520,6 +610,11 @@ const Produtos: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Sabor {formData.categoria === 'pizzas' && '*'}
+                  {formData.categoria === 'pizzas' && formData.sabor && isSaborEspecial(formData.sabor) && (
+                    <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                      Sabor Especial - Preços Diferenciados
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -527,84 +622,120 @@ const Produtos: React.FC = () => {
                   value={formData.sabor}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: Margherita, Calabresa, Portuguesa"
+                  placeholder="Ex: Margherita, Calabresa, Portuguesa, Atum, Bacon"
                   required={formData.categoria === 'pizzas'}
                 />
+                {formData.categoria === 'pizzas' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Sabores especiais (Atum, Bacon) têm preços diferenciados para tamanhos Média, Grande e Família
+                  </p>
+                )}
               </div>
 
               {/* Tem Variações de Tamanho */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="temVariacoes"
-                  checked={formData.temVariacoes}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Este produto tem variações de tamanho com preços diferentes
-                </label>
-              </div>
+              {formData.categoria !== 'pizzas' && (
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="temVariacoes"
+                    checked={formData.temVariacoes}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label className="ml-2 block text-sm text-gray-700">
+                    Este produto tem variações de tamanho com preços diferentes
+                  </label>
+                </div>
+              )}
+
+              {/* Informação automática para pizzas */}
+              {formData.categoria === 'pizzas' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-800">
+                      Preços Automáticos Aplicados
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Os preços são definidos automaticamente por tamanho. Sabores especiais (Atum, Bacon) têm valores diferenciados.
+                  </p>
+                </div>
+              )}
 
               {/* Preço e Preço Promocional */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Preço *
-                  </label>
-                  <input
-                    type="number"
-                    name="preco"
-                    value={formData.preco}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    min="0"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
-                    required
-                  />
+              {formData.categoria !== 'pizzas' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Preço *
+                    </label>
+                    <input
+                      type="number"
+                      name="preco"
+                      value={formData.preco}
+                      onChange={handleInputChange}
+                      step="0.01"
+                      min="0"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Preço Promocional
+                    </label>
+                    <input
+                      type="number"
+                      name="precoPromocional"
+                      value={formData.precoPromocional}
+                      onChange={handleInputChange}
+                      step="0.01"
+                      min="0"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Preço Promocional
-                  </label>
-                  <input
-                    type="number"
-                    name="precoPromocional"
-                    value={formData.precoPromocional}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    min="0"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Seção de Tamanhos (quando temVariacoes está marcado) */}
               {formData.temVariacoes && (
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Tamanhos e Preços</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">
+                    Tamanhos e Preços
+                    {formData.categoria === 'pizzas' && (
+                      <span className="ml-2 text-sm font-normal text-blue-600">(Automático)</span>
+                    )}
+                  </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Configure os diferentes tamanhos disponíveis para este produto.
+                    {formData.categoria === 'pizzas' 
+                      ? 'Preços aplicados automaticamente conforme configuração padrão. Sabores especiais têm valores diferenciados.'
+                      : 'Configure os diferentes tamanhos disponíveis para este produto.'
+                    }
                   </p>
                   
                   {formData.tamanhos.length === 0 ? (
                     <div className="text-center py-4">
                       <p className="text-gray-500 mb-3">Nenhum tamanho configurado</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const novoTamanho = { nome: '', preco: '', descricao: '' };
-                          setFormData(prev => ({
-                            ...prev,
-                            tamanhos: [...prev.tamanhos, novoTamanho]
-                          }));
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Adicionar Primeiro Tamanho
-                      </button>
+                      {formData.categoria !== 'pizzas' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const novoTamanho = { nome: '', preco: '', descricao: '' };
+                            setFormData(prev => ({
+                              ...prev,
+                              tamanhos: [...prev.tamanhos, novoTamanho]
+                            }));
+                          }}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Adicionar Primeiro Tamanho
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -618,32 +749,44 @@ const Produtos: React.FC = () => {
                               type="text"
                               value={tamanho.nome}
                               onChange={(e) => {
-                                const novosTamanhos = [...formData.tamanhos];
-                                novosTamanhos[index].nome = e.target.value;
-                                setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                if (formData.categoria !== 'pizzas') {
+                                  const novosTamanhos = [...formData.tamanhos];
+                                  novosTamanhos[index].nome = e.target.value;
+                                  setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                }
                               }}
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              className={`w-full border border-gray-300 rounded px-2 py-1 text-sm ${
+                                formData.categoria === 'pizzas' ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
                               placeholder="Ex: Pequena"
                               required
+                              readOnly={formData.categoria === 'pizzas'}
                             />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Preço *
+                              Preço * {formData.categoria === 'pizzas' && formData.sabor && isSaborEspecial(formData.sabor) && (
+                                <span className="text-orange-600">(Especial)</span>
+                              )}
                             </label>
                             <input
                               type="number"
                               value={tamanho.preco}
                               onChange={(e) => {
-                                const novosTamanhos = [...formData.tamanhos];
-                                novosTamanhos[index].preco = e.target.value;
-                                setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                if (formData.categoria !== 'pizzas') {
+                                  const novosTamanhos = [...formData.tamanhos];
+                                  novosTamanhos[index].preco = e.target.value;
+                                  setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                }
                               }}
                               step="0.01"
                               min="0"
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              className={`w-full border border-gray-300 rounded px-2 py-1 text-sm ${
+                                formData.categoria === 'pizzas' ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
                               placeholder="0.00"
                               required
+                              readOnly={formData.categoria === 'pizzas'}
                             />
                           </div>
                           <div>
@@ -654,42 +797,51 @@ const Produtos: React.FC = () => {
                               type="text"
                               value={tamanho.descricao}
                               onChange={(e) => {
-                                const novosTamanhos = [...formData.tamanhos];
-                                novosTamanhos[index].descricao = e.target.value;
-                                setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                if (formData.categoria !== 'pizzas') {
+                                  const novosTamanhos = [...formData.tamanhos];
+                                  novosTamanhos[index].descricao = e.target.value;
+                                  setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                }
                               }}
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              className={`w-full border border-gray-300 rounded px-2 py-1 text-sm ${
+                                formData.categoria === 'pizzas' ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
                               placeholder="Ex: 25cm"
+                              readOnly={formData.categoria === 'pizzas'}
                             />
                           </div>
                           <div className="flex items-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const novosTamanhos = formData.tamanhos.filter((_, i) => i !== index);
-                                setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
-                              }}
-                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                            >
-                              Remover
-                            </button>
+                            {formData.categoria !== 'pizzas' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const novosTamanhos = formData.tamanhos.filter((_, i) => i !== index);
+                                  setFormData(prev => ({ ...prev, tamanhos: novosTamanhos }));
+                                }}
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                              >
+                                Remover
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
                       
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const novoTamanho = { nome: '', preco: '', descricao: '' };
-                          setFormData(prev => ({
-                            ...prev,
-                            tamanhos: [...prev.tamanhos, novoTamanho]
-                          }));
-                        }}
-                        className="w-full px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
-                      >
-                        + Adicionar Outro Tamanho
-                      </button>
+                      {formData.categoria !== 'pizzas' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const novoTamanho = { nome: '', preco: '', descricao: '' };
+                            setFormData(prev => ({
+                              ...prev,
+                              tamanhos: [...prev.tamanhos, novoTamanho]
+                            }));
+                          }}
+                          className="w-full px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+                        >
+                          + Adicionar Outro Tamanho
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -742,21 +894,6 @@ const Produtos: React.FC = () => {
                 </div>
               </div>
 
-              {/* URL da Imagem */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL da Imagem
-                </label>
-                <input
-                  type="url"
-                  name="imagemUrl"
-                  value={formData.imagemUrl}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
-              </div>
-
               {/* Ingredientes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -803,29 +940,29 @@ const Produtos: React.FC = () => {
               </div>
 
               {/* Botões */}
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false)
-                    resetForm()
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting 
-                    ? (editingProduct ? 'Salvando...' : 'Criando...') 
-                    : (editingProduct ? 'Salvar Alterações' : 'Criar Produto')
-                  }
-                </button>
-              </div>
+               <div className="flex justify-end space-x-3 pt-4">
+                 <button
+                   type="button"
+                   onClick={() => {
+                     setShowModal(false)
+                     resetForm()
+                   }}
+                   className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                   disabled={isSubmitting}
+                 >
+                   Cancelar
+                 </button>
+                 <button
+                   type="submit"
+                   disabled={isSubmitting}
+                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   {isSubmitting 
+                     ? (editingProduct ? 'Salvando...' : 'Criando...') 
+                     : (editingProduct ? 'Salvar Alterações' : 'Criar Produto')
+                   }
+                 </button>
+               </div>
             </form>
           </div>
         </div>

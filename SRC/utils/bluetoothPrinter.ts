@@ -42,6 +42,7 @@ export class BluetoothPrinterService {
   private characteristic: any | null = null
   private readonly SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb'
   private readonly CHARACTERISTIC_UUID = '00002af1-0000-1000-8000-00805f9b34fb'
+  private rememberedDeviceId: string | null = null
 
   // Verificar se Bluetooth está disponível
   isBluetoothAvailable(): boolean {
@@ -74,6 +75,40 @@ export class BluetoothPrinterService {
     } catch (error) {
       console.error('Erro ao buscar dispositivos:', error)
       throw error
+    }
+  }
+
+  // Definir dispositivo lembrado (por id) para reconexão
+  setRememberedDevice(deviceId: string | null) {
+    this.rememberedDeviceId = deviceId
+  }
+
+  // Tentar reconexão automática usando dispositivos já autorizados pelo navegador
+  async tryReconnect(): Promise<boolean> {
+    try {
+      if (!this.isBluetoothAvailable()) return false
+      // getDevices retorna dispositivos já autorizados pelo usuário
+      // Nem todos os navegadores suportam; envolver em try/catch
+      // @ts-ignore
+      const devices = await (navigator.bluetooth.getDevices?.() || [])
+      const candidate = (devices as any[]).find(d => !this.rememberedDeviceId || d.id === this.rememberedDeviceId)
+      if (!candidate) return false
+
+      const server = await candidate.gatt?.connect()
+      if (!server) return false
+      const service = await server.getPrimaryService(this.SERVICE_UUID)
+      this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID)
+
+      this.device = {
+        id: candidate.id,
+        name: candidate.name || 'Impressora POS58',
+        address: candidate.id,
+        connected: true
+      }
+      return true
+    } catch (err) {
+      console.warn('Falha ao reconectar automaticamente:', err)
+      return false
     }
   }
 
@@ -225,6 +260,90 @@ export class BluetoothPrinterService {
       
     } catch (error) {
       console.error('Erro ao imprimir pedido:', error)
+      throw error
+    }
+  }
+
+  // Imprimir via da cozinha (formato específico para cozinha)
+  async printKitchenOrder(order: any): Promise<void> {
+    try {
+      // Inicializar impressora
+      await this.sendData(ESC_POS_COMMANDS.INIT)
+      
+      // Cabeçalho da via cozinha
+      await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
+      await this.printCentered('VIA COZINHA')
+      await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
+      
+      await this.printSeparator()
+      
+      // Informações básicas do pedido
+      await this.printBold(`Pedido: #${order.id}`)
+      await this.printLine(`Data: ${new Date(order.data).toLocaleString('pt-BR')}`)
+      await this.printLine(`Cliente: ${order.cliente}`)
+      await this.printLine(`Telefone: ${order.telefone}`)
+      if (order.endereco) {
+        await this.printLine(`Endereço: ${order.endereco}`)
+      }
+      await this.printLine(`Pagamento: ${order.formaPagamento}`)
+      
+      await this.printSeparator()
+      
+      // Itens do pedido com detalhes para cozinha (mais legível)
+      await this.sendData(ESC_POS_COMMANDS.UNDERLINE_ON)
+      await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
+      await this.printCentered('ITENS PARA PREPARO')
+      await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
+      await this.sendData(ESC_POS_COMMANDS.UNDERLINE_OFF)
+      await this.printLine()
+      
+      for (let i = 0; i < order.itens.length; i++) {
+        const item = order.itens[i]
+        // Destacar o nome do item em tamanho duplo e negrito
+        await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
+        await this.printBold(`${i + 1}. ${String(item.nome || '').toUpperCase()}`)
+        await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
+        await this.printLine(`Qtd: ${item.quantidade}x`)
+        
+        // Sabores (para pizzas)
+        if (item.sabores && item.sabores.length > 0) {
+          await this.printLine(`Sabores: ${item.sabores.join(', ')}`)
+        }
+        
+        // Tamanho
+        if (item.tamanho) {
+          await this.printLine(`Tamanho: ${item.tamanho}`)
+        }
+        
+        // Observações do item
+        if (item.observacoes) {
+          await this.printLine(`Obs: ${item.observacoes}`)
+        }
+        
+        await this.printLine() // Linha em branco entre itens
+      }
+      
+      await this.printSeparator()
+      
+      // Observações gerais do pedido
+      if (order.observacoesPedido) {
+        await this.printBold('OBSERVACOES GERAIS:')
+        await this.printLine(order.observacoesPedido)
+        await this.printSeparator()
+      }
+      
+      // Tempo estimado
+      await this.printCentered('Tempo Estimado: 30 min')
+      
+      await this.printLine()
+      await this.printLine()
+      await this.printLine()
+      
+      // Cortar papel
+      await this.cutPaper()
+      
+    } catch (error) {
+      console.error('Erro ao imprimir via cozinha:', error)
       throw error
     }
   }

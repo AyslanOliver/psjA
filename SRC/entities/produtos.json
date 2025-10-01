@@ -39,10 +39,6 @@
             "minimum": 0,
             "description": "Quantidade em estoque"
           },
-          "imagemUrl": {
-            "bsonType": "string",
-            "description": "URL da imagem do produto"
-          },
           "ingredientes": {
             "bsonType": "array",
             "items": {

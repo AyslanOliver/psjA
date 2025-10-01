@@ -29,7 +29,11 @@ const Dashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pendente': return 'bg-yellow-100 text-yellow-800'
+      case 'confirmado': return 'bg-orange-100 text-orange-800'
       case 'em_andamento': return 'bg-blue-100 text-blue-800'
+      case 'preparando': return 'bg-amber-100 text-amber-800'
+      case 'pronto': return 'bg-purple-100 text-purple-800'
+      case 'saiu_entrega': return 'bg-indigo-100 text-indigo-800'
       case 'entregue': return 'bg-green-100 text-green-800'
       case 'cancelado': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
@@ -39,7 +43,11 @@ const Dashboard: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pendente': return 'Pendente'
+      case 'confirmado': return 'Confirmado'
       case 'em_andamento': return 'Em Andamento'
+      case 'preparando': return 'Preparando'
+      case 'pronto': return 'Pronto'
+      case 'saiu_entrega': return 'Saiu para Entrega'
       case 'entregue': return 'Entregue'
       case 'cancelado': return 'Cancelado'
       default: return status

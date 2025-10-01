@@ -169,6 +169,23 @@ const configuracaoSchema = new mongoose.Schema({
       enum: [58, 80],
       default: 58
     },
+    // Dados do dispositivo Bluetooth lembrado para reconexão automática
+    bluetoothDeviceId: {
+      type: String,
+      default: ''
+    },
+    bluetoothDeviceName: {
+      type: String,
+      default: ''
+    },
+    lembrarDispositivo: {
+      type: Boolean,
+      default: true
+    },
+    reconectarAutomaticamente: {
+      type: Boolean,
+      default: true
+    },
     cortarPapel: {
       type: Boolean,
       default: true

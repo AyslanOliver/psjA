@@ -2,9 +2,11 @@
 import React, { useState } from 'react'
 import { usePedidos } from '../hooks/usePedidos'
 import { useProdutos } from '../hooks/useProdutos'
+import { getTamanhosDisponiveis, getPizzaPrice, SABORES_DISPONIVEIS, isSaborEspecial } from '../config/pizzaPricing'
+import { bluetoothPrinter } from '../utils/bluetoothPrinter'
 
 const Pedidos: React.FC = () => {
-  const { pedidos, loading, createPedido } = usePedidos()
+  const { pedidos, loading, createPedido, updateStatusPedido } = usePedidos()
   const { produtos } = useProdutos()
   const [filtroStatus, setFiltroStatus] = useState<string>('todos')
   const [showModal, setShowModal] = useState(false)
@@ -31,6 +33,8 @@ const Pedidos: React.FC = () => {
       precoTotal: number
       observacoes?: string
       tamanho?: string
+      sabor?: string
+      sabores?: string[]
     }>,
     formaPagamento: 'dinheiro',
     trocoParaValor: 0,
@@ -49,7 +53,9 @@ const Pedidos: React.FC = () => {
 
   const statusOptions = [
     { value: 'pendente', label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'confirmado', label: 'Confirmado', color: 'bg-orange-100 text-orange-800' },
     { value: 'em_andamento', label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
+    { value: 'preparando', label: 'Preparando', color: 'bg-amber-100 text-amber-800' },
     { value: 'pronto', label: 'Pronto', color: 'bg-purple-100 text-purple-800' },
     { value: 'saiu_entrega', label: 'Saiu para Entrega', color: 'bg-indigo-100 text-indigo-800' },
     { value: 'entregue', label: 'Entregue', color: 'bg-green-100 text-green-800' },
@@ -70,10 +76,154 @@ const Pedidos: React.FC = () => {
     return statusOption?.label || status
   }
 
-  const handleStatusChange = (pedidoId: string, novoStatus: string) => {
-    // Implementar mudança de status
-    console.log(`Mudando status do pedido ${pedidoId} para ${novoStatus}`)
+  const handleStatusChange = async (pedidoId: string, novoStatus: string) => {
+    try {
+      await updateStatusPedido(pedidoId, novoStatus)
+    } catch (error) {
+      console.error('Erro ao alterar status:', error)
+    }
   }
+
+  // Função para imprimir via para cozinha usando impressora Bluetooth POS 58
+  const handlePrintKitchen = async (pedido: any) => {
+    try {
+      // Verificar se Bluetooth está disponível
+      if (!bluetoothPrinter.isBluetoothAvailable()) {
+        alert('Bluetooth não está disponível neste dispositivo')
+        return
+      }
+
+      // Verificar se já está conectado; tentar reconexão automática antes de solicitar pareamento
+      if (!bluetoothPrinter.isConnected()) {
+        const reconnected = await bluetoothPrinter.tryReconnect().catch(() => false)
+        if (!reconnected) {
+          const connected = await bluetoothPrinter.connect()
+          if (!connected) {
+            alert('Falha ao conectar com a impressora Bluetooth')
+            return
+          }
+        }
+      }
+
+      // Preparar dados do pedido para impressão
+      const orderData = {
+        id: pedido._id,
+        data: pedido.criadoEm || new Date(),
+        cliente: pedido.clienteNome || 'Cliente não informado',
+        telefone: pedido.clienteTelefone || 'Não informado',
+        endereco: pedido.enderecoEntrega ? 
+          `${pedido.enderecoEntrega.rua}, ${pedido.enderecoEntrega.numero}${pedido.enderecoEntrega.complemento ? `, ${pedido.enderecoEntrega.complemento}` : ''} - ${pedido.enderecoEntrega.bairro}, ${pedido.enderecoEntrega.cidade}` :
+          'Endereço não informado',
+        itens: Array.isArray(pedido.itens) ? pedido.itens.map((item: any) => ({
+          quantidade: item.quantidade,
+          nome: item.nome,
+          preco: (item.precoUnitario ?? item.preco) || 0,
+          observacoes: item.observacoes,
+          sabores: item.sabores,
+          tamanho: item.tamanho
+        })) : [],
+        subtotal: typeof pedido.subtotal === 'number' ? pedido.subtotal : (Array.isArray(pedido.itens) ? pedido.itens.reduce((acc: number, item: any) => acc + (item.precoTotal || ((item.precoUnitario || 0) * item.quantidade)), 0) : 0),
+        taxaEntrega: pedido.taxaEntrega || 0,
+        total: typeof pedido.total === 'number' ? pedido.total : (typeof pedido.valorTotal === 'number' ? pedido.valorTotal : 0),
+        formaPagamento: pedido.formaPagamento || 'PIX',
+        troco: pedido.formaPagamento === 'dinheiro' && pedido.trocoParaValor ? pedido.trocoParaValor : null,
+        observacoesPedido: pedido.observacoesPedido
+      }
+
+      // Imprimir via cozinha usando a impressora Bluetooth
+      await bluetoothPrinter.printKitchenOrder(orderData)
+      
+      alert('Via da cozinha impressa com sucesso!')
+
+    } catch (error) {
+      console.error('Erro ao imprimir via cozinha:', error)
+      alert('Erro ao imprimir: ' + (error as Error).message)
+    }
+  };
+
+  // Função para gerar mensagem do WhatsApp
+  const handleWhatsAppMessage = (pedido: any) => {
+    const formatarEndereco = (endereco: any) => {
+      if (!endereco) return 'Endereço não informado';
+      return `${endereco.rua}, ${endereco.numero}${endereco.complemento ? `, ${endereco.complemento}` : ''} - ${endereco.bairro}, ${endereco.cidade} - CEP: ${endereco.cep}`;
+    };
+
+    const formatarItens = (items: any[]) => {
+      if (!items || items.length === 0) return 'Nenhum item';
+      
+      return items.map((item, index) => {
+        const subtotal = (item.preco * item.quantidade).toFixed(2);
+        let itemText = `${index + 1}. ${item.nome}`;
+        
+        if (item.sabores && item.sabores.length > 0) {
+          itemText += ` (${item.sabores.join(', ')})`;
+        }
+        
+        if (item.tamanho) {
+          itemText += ` - ${item.tamanho}`;
+        }
+        
+        itemText += `\n   Qtd: ${item.quantidade}x R$ ${item.preco.toFixed(2)}\n   Subtotal: R$ ${subtotal}`;
+        
+        if (item.observacoes) {
+          itemText += `\n   Obs: ${item.observacoes}`;
+        }
+        
+        return itemText;
+      }).join('\n\n');
+    };
+
+    const subtotal = pedido.items ? pedido.items.reduce((acc: number, item: any) => acc + (item.preco * item.quantidade), 0) : 0;
+    const taxaEntrega = pedido.taxaEntrega || 0;
+    const desconto = pedido.desconto || 0;
+    const total = subtotal + taxaEntrega - desconto;
+
+    const mensagem = `🛒 PEDIDO DELIVERY
+
+👤 Cliente: ${pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado'}
+📍 Endereço: ${formatarEndereco(pedido.endereco)}
+💳 Pagamento: ${pedido.formaPagamento || 'PIX'}${pedido.formaPagamento === 'dinheiro' && pedido.trocoParaValor ? ` (Troco para R$ ${pedido.trocoParaValor.toFixed(2)})` : ''}
+
+📋 ITENS:
+${formatarItens(pedido.items)}
+
+💰 SUBTOTAL: R$ ${subtotal.toFixed(2)}
+🚚 Taxa de Delivery: R$ ${taxaEntrega.toFixed(2)}${desconto > 0 ? `\n💸 Desconto: -R$ ${desconto.toFixed(2)}` : ''}
+💰 TOTAL: R$ ${total.toFixed(2)}${pedido.observacoesPedido ? `\n\n📝 Observações: ${pedido.observacoesPedido}` : ''}`;
+
+    // Copiar para clipboard
+    navigator.clipboard.writeText(mensagem).then(() => {
+      alert('Mensagem copiada para a área de transferência! Cole no WhatsApp.');
+    }).catch(() => {
+      // Fallback: mostrar em um modal
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.5); z-index: 9999; display: flex; 
+        align-items: center; justify-content: center;
+      `;
+      
+      const content = document.createElement('div');
+      content.style.cssText = `
+        background: white; padding: 20px; border-radius: 8px; 
+        max-width: 500px; max-height: 80vh; overflow-y: auto;
+      `;
+      
+      content.innerHTML = `
+        <h3>Mensagem para WhatsApp</h3>
+        <textarea readonly style="width: 100%; height: 300px; font-family: monospace; font-size: 12px;">${mensagem}</textarea>
+        <div style="margin-top: 10px; text-align: right;">
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                  style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Fechar
+          </button>
+        </div>
+      `;
+      
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+    });
+  };
 
   // Form handlers
   const handleInputChange = (field: string, value: any) => {
@@ -99,14 +249,16 @@ const Pedidos: React.FC = () => {
         return;
       }
 
-      const precosPorTamanho = {
-        'Pequena': 25.00,
-        'Média': 35.00,
-        'Grande': 45.00,
-        'Família': 55.00
-      };
+      // Calcular preço usando a configuração centralizada
+      // Para múltiplos sabores, usar o preço do sabor mais caro
+      let precoBase = 0;
+      selectedSabores.forEach(sabor => {
+        const precoSabor = getPizzaPrice(selectedTamanho, sabor);
+        if (precoSabor > precoBase) {
+          precoBase = precoSabor;
+        }
+      });
 
-      const precoBase = precosPorTamanho[selectedTamanho as keyof typeof precosPorTamanho] || 0;
       const nomeItem = `Pizza ${selectedTamanho} - ${selectedSabores.join(', ')}`;
 
       const novoItem = {
@@ -365,16 +517,17 @@ const Pedidos: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600">Cliente</p>
-                          <p className="font-medium text-gray-900">{pedido.clienteNome}</p>
+                          <p className="font-medium text-gray-900">{pedido.clienteNome || 'Cliente não informado'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Telefone</p>
-                          <p className="font-medium text-gray-900">{pedido.clienteTelefone}</p>
+                          <p className="font-medium text-gray-900">{pedido.clienteTelefone || 'Telefone não informado'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Data do Pedido</p>
                           <p className="font-medium text-gray-900">
-                            {pedido.criadoEm ? new Date(pedido.criadoEm).toLocaleDateString('pt-BR') : 'Data não disponível'}
+                            {pedido.criadoEm ? new Date(pedido.criadoEm).toLocaleDateString('pt-BR') : 
+                             'Data não disponível'}
                           </p>
                         </div>
                         <div>
@@ -402,11 +555,11 @@ const Pedidos: React.FC = () => {
                       {pedido.itens && pedido.itens.length > 0 && (
                         <div className="mb-4">
                           <p className="text-sm text-gray-600 mb-2">Itens do Pedido</p>
-                          <div className="space-y-1">
-                            {pedido.itens.map((item, index) => (
+                          <div className="bg-gray-50 p-3 rounded space-y-1">
+                            {pedido.itens.map((item: any, index: number) => (
                               <div key={index} className="flex justify-between text-sm">
                                 <span>{item.quantidade}x {item.nome}</span>
-                                <span>R$ {(item.precoTotal ?? 0).toFixed(2)}</span>
+                                <span>R$ {(item.precoTotal ?? ((item.precoUnitario || 0) * item.quantidade)).toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -426,6 +579,26 @@ const Pedidos: React.FC = () => {
                           </option>
                         ))}
                       </select>
+                      
+                      <button 
+                        onClick={() => handlePrintKitchen(pedido)}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center space-x-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        <span>Via Cozinha</span>
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleWhatsAppMessage(pedido)}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center space-x-1"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.251"/>
+                        </svg>
+                        <span>WhatsApp</span>
+                      </button>
                       
                       <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         Ver Detalhes
@@ -617,9 +790,9 @@ const Pedidos: React.FC = () => {
                    )}
 
                    {/* Tamanho para produtos com variações (não pizzas) */}
-                   {selectedCategoria && selectedCategoria !== 'pizzas' && selectedProduto && (() => {
+                  {selectedCategoria && selectedCategoria !== 'pizzas' && selectedProduto && (() => {
                      const produto = produtos.find(p => p._id === selectedProduto);
-                     return produto?.temVariacoes && produto?.tamanhos?.length > 0;
+                    return Array.isArray(produto?.tamanhos) && (produto!.tamanhos!.length > 0);
                    })() && (
                      <div>
                        <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -660,10 +833,11 @@ const Pedidos: React.FC = () => {
                          required
                        >
                          <option value="">Selecione o tamanho</option>
-                         <option value="Pequena">Pequena - R$ 25,00</option>
-                         <option value="Média">Média - R$ 35,00</option>
-                         <option value="Grande">Grande - R$ 45,00</option>
-                         <option value="Família">Família - R$ 55,00</option>
+                         {getTamanhosDisponiveis().map(tamanho => (
+                           <option key={tamanho.nome} value={tamanho.nome}>
+                             {tamanho.nome} - R$ {tamanho.preco.toFixed(2)} {tamanho.descricao && `(${tamanho.descricao})`}
+                           </option>
+                         ))}
                        </select>
                      </div>
                    )}
@@ -675,18 +849,7 @@ const Pedidos: React.FC = () => {
                          Sabores da Pizza (máximo 3)
                        </label>
                        <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                         {[
-                           'Margherita',
-                           'Pepperoni',
-                           'Calabresa',
-                           'Quatro Queijos',
-                           'Portuguesa',
-                           'Frango com Catupiry',
-                           'Bacon',
-                           'Vegetariana',
-                           'Napolitana',
-                           'Atum'
-                         ].map(sabor => (
+                         {SABORES_DISPONIVEIS.map(sabor => (
                            <label key={sabor} className="flex items-center">
                              <input
                                type="checkbox"
@@ -701,14 +864,28 @@ const Pedidos: React.FC = () => {
                                disabled={!selectedSabores.includes(sabor) && selectedSabores.length >= 3}
                                className="mr-2"
                              />
-                             <span className="text-sm">{sabor}</span>
+                             <span className="text-sm">
+                               {sabor}
+                               {isSaborEspecial(sabor) && (
+                                 <span className="ml-1 text-xs bg-orange-100 text-orange-800 px-1 py-0.5 rounded">
+                                   Especial
+                                 </span>
+                               )}
+                             </span>
                            </label>
                          ))}
                        </div>
                        {selectedSabores.length > 0 && (
-                         <p className="text-sm text-gray-600 mt-2">
-                           Sabores selecionados: {selectedSabores.join(', ')}
-                         </p>
+                         <div className="mt-2">
+                           <p className="text-sm text-gray-600">
+                             Sabores selecionados: {selectedSabores.join(', ')}
+                           </p>
+                           {selectedSabores.some(sabor => isSaborEspecial(sabor)) && (
+                             <p className="text-xs text-orange-600 mt-1">
+                               ⚠️ Sabores especiais têm preços diferenciados
+                             </p>
+                           )}
+                         </div>
                        )}
                      </div>
                    )}
@@ -722,7 +899,7 @@ const Pedidos: React.FC = () => {
                        <input
                          type="number"
                          min="1"
-                         value={quantidade}
+                         value={quantidade || 1}
                          onChange={(e) => setQuantidade(parseInt(e.target.value) || 1)}
                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                        />
@@ -752,7 +929,7 @@ const Pedidos: React.FC = () => {
                            : (() => {
                                if (!selectedProduto) return true;
                                const produto = produtos.find(p => p._id === selectedProduto);
-                               if (produto?.temVariacoes && produto?.tamanhos?.length > 0) {
+                               if (Array.isArray(produto?.tamanhos) && produto!.tamanhos!.length > 0) {
                                  return !selectedTamanho;
                                }
                                return false;
@@ -833,7 +1010,7 @@ const Pedidos: React.FC = () => {
                         type="number"
                         step="0.01"
                         min="0"
-                        value={formData.trocoParaValor}
+                        value={formData.trocoParaValor || 0}
                         onChange={(e) => handleInputChange('trocoParaValor', parseFloat(e.target.value) || 0)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="0.00"
@@ -848,7 +1025,7 @@ const Pedidos: React.FC = () => {
                       type="number"
                       step="0.01"
                       min="0"
-                      value={formData.taxaEntrega}
+                      value={formData.taxaEntrega || 0}
                       onChange={(e) => handleInputChange('taxaEntrega', parseFloat(e.target.value) || 0)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -861,7 +1038,7 @@ const Pedidos: React.FC = () => {
                       type="number"
                       step="0.01"
                       min="0"
-                      value={formData.desconto}
+                      value={formData.desconto || 0}
                       onChange={(e) => handleInputChange('desconto', parseFloat(e.target.value) || 0)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -873,7 +1050,7 @@ const Pedidos: React.FC = () => {
                     <input
                       type="number"
                       min="1"
-                      value={formData.tempoEstimadoMinutos}
+                      value={formData.tempoEstimadoMinutos || 30}
                       onChange={(e) => handleInputChange('tempoEstimadoMinutos', parseInt(e.target.value) || 30)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
