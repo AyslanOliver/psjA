@@ -10,10 +10,10 @@ import {
   CheckCircle,
   Printer,
   Bluetooth,
-  Search,
-  Wifi
+  Search
 } from 'lucide-react'
 import { bluetoothPrinter, BluetoothDevice } from '../utils/bluetoothPrinter'
+import { api } from '../lib/api'
 
 interface ConfiguracaoSistema {
   loja: {
@@ -75,7 +75,7 @@ const Configuracoes: React.FC = () => {
   const [showSaveMessage, setShowSaveMessage] = useState(false)
   
   // Estados para gerenciamento da impressora Bluetooth
-  const [bluetoothDevices, setBluetoothDevices] = useState<BluetoothDevice[]>([])
+  const [, setBluetoothDevices] = useState<BluetoothDevice[]>([])
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isScanning, setIsScanning] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -156,11 +156,58 @@ const Configuracoes: React.FC = () => {
     { value: 'domingo', label: 'Domingo' }
   ]
 
-  const handleSave = () => {
-    // Aqui você salvaria as configurações no backend
-    console.log('Salvando configurações:', configuracoes)
-    setShowSaveMessage(true)
-    setTimeout(() => setShowSaveMessage(false), 3000)
+  const handleSave = async () => {
+    try {
+      // Persistir dispositivo conectado, se houver
+      if (connectedDevice) {
+        setConfiguracoes(prev => ({
+          ...prev,
+          impressora: {
+            ...prev.impressora,
+            tipo: 'bluetooth'
+          }
+        }))
+        // Atualizar no backend alguns campos de impressora
+        await api.updateConfiguracaoCategoria('impressora', {
+          habilitada: configuracoes.impressora.habilitada,
+          tipo: 'bluetooth',
+          larguraPapel: configuracoes.impressora.larguraPapel,
+          cortarPapel: configuracoes.impressora.cortarPapel,
+          imprimirLogo: configuracoes.impressora.imprimirLogo,
+          logoUrl: configuracoes.impressora.logoUrl,
+          rodape: configuracoes.impressora.rodape
+        })
+      } else {
+        // Atualizar demais seções completas
+        await api.updateConfiguracoes({
+          loja: configuracoes.loja,
+          delivery: {
+            taxaEntrega: configuracoes.delivery.taxaEntregaBase,
+            tempoMedioEntrega: configuracoes.delivery.tempoEstimadoMinutos,
+            raioEntrega: configuracoes.delivery.raioEntregaKm,
+            pedidoMinimo: configuracoes.delivery.valorMinimoEntrega
+          },
+          pagamento: {
+            aceitaDinheiro: configuracoes.pagamento.aceitaDinheiro,
+            aceitaCartao: configuracoes.pagamento.aceitaCartao,
+            aceitaPix: configuracoes.pagamento.aceitaPix
+          },
+          notificacoes: {
+            email: configuracoes.notificacoes.emailNovoPedido,
+            sms: configuracoes.notificacoes.smsStatusPedido,
+            whatsapp: configuracoes.notificacoes.whatsappConfirmacao
+          },
+          sistema: configuracoes.sistema,
+          impressora: configuracoes.impressora
+        })
+      }
+
+      setShowSaveMessage(true)
+      setTimeout(() => setShowSaveMessage(false), 3000)
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error)
+      alert('Falha ao salvar configurações. Verifique a API.')
+    }
   }
 
   const updateConfig = (section: keyof ConfiguracaoSistema, field: string, value: any) => {
@@ -199,6 +246,74 @@ const Configuracoes: React.FC = () => {
   useEffect(() => {
     setBluetoothSupported(bluetoothPrinter.isBluetoothAvailable())
     
+    // Carregar configurações do backend ao montar
+    ;(async () => {
+      try {
+        const data = await api.getConfiguracoes()
+        // Mapear campos do backend -> frontend
+        setConfiguracoes(prev => ({
+          ...prev,
+          loja: {
+            ...prev.loja,
+            nome: data.loja?.nome ?? prev.loja.nome,
+            telefone: data.loja?.telefone ?? prev.loja.telefone,
+            email: data.loja?.email ?? prev.loja.email,
+            endereco: {
+              rua: data.loja?.endereco?.rua ?? prev.loja.endereco.rua,
+              numero: data.loja?.endereco?.numero ?? prev.loja.endereco.numero,
+              bairro: data.loja?.endereco?.bairro ?? prev.loja.endereco.bairro,
+              cidade: data.loja?.endereco?.cidade ?? prev.loja.endereco.cidade,
+              cep: data.loja?.endereco?.cep ?? prev.loja.endereco.cep
+            },
+            horarioFuncionamento: prev.loja.horarioFuncionamento
+          },
+          delivery: {
+            taxaEntregaBase: data.delivery?.taxaEntrega ?? prev.delivery.taxaEntregaBase,
+            tempoEstimadoMinutos: data.delivery?.tempoMedioEntrega ?? prev.delivery.tempoEstimadoMinutos,
+            raioEntregaKm: data.delivery?.raioEntrega ?? prev.delivery.raioEntregaKm,
+            valorMinimoEntrega: data.delivery?.pedidoMinimo ?? prev.delivery.valorMinimoEntrega
+          },
+          pagamento: {
+            aceitaDinheiro: data.pagamento?.aceitaDinheiro ?? prev.pagamento.aceitaDinheiro,
+            aceitaCartao: data.pagamento?.aceitaCartao ?? prev.pagamento.aceitaCartao,
+            aceitaPix: data.pagamento?.aceitaPix ?? prev.pagamento.aceitaPix,
+            trocoMaximo: prev.pagamento.trocoMaximo
+          },
+          notificacoes: {
+            emailNovoPedido: data.notificacoes?.email ?? prev.notificacoes.emailNovoPedido,
+            smsStatusPedido: data.notificacoes?.sms ?? prev.notificacoes.smsStatusPedido,
+            whatsappConfirmacao: data.notificacoes?.whatsapp ?? prev.notificacoes.whatsappConfirmacao
+          },
+          impressora: {
+            ...prev.impressora,
+            habilitada: data.impressora?.habilitada ?? prev.impressora.habilitada,
+            tipo: (data.impressora?.tipo === 'wifi' ? 'ethernet' : data.impressora?.tipo) ?? prev.impressora.tipo,
+            porta: data.impressora?.porta ?? prev.impressora.porta,
+            ip: data.impressora?.ip ?? prev.impressora.ip,
+            larguraPapel: data.impressora?.larguraPapel ?? prev.impressora.larguraPapel,
+            cortarPapel: data.impressora?.cortarPapel ?? prev.impressora.cortarPapel,
+            imprimirLogo: data.impressora?.imprimirLogo ?? prev.impressora.imprimirLogo,
+            logoUrl: data.impressora?.logoUrl ?? prev.impressora.logoUrl,
+            rodape: data.impressora?.rodape ?? prev.impressora.rodape
+          },
+          sistema: {
+            ...prev.sistema,
+            tema: data.sistema?.tema ?? prev.sistema.tema,
+            idioma: data.sistema?.idioma ?? prev.sistema.idioma,
+            timezone: data.sistema?.timezone ?? prev.sistema.timezone,
+            backupAutomatico: data.sistema?.backupAutomatico ?? prev.sistema.backupAutomatico
+          }
+        }))
+
+        // Definir dispositivo lembrado para reconexão automática
+        if (data.impressora?.bluetoothDeviceId) {
+          bluetoothPrinter.setRememberedDevice(data.impressora.bluetoothDeviceId)
+        }
+      } catch (err) {
+        console.error('Erro ao carregar configurações:', err)
+      }
+    })()
+
     // Verificar se já existe uma conexão ativa
     const deviceInfo = bluetoothPrinter.getDeviceInfo()
     if (deviceInfo && deviceInfo.connected) {
@@ -232,6 +347,17 @@ const Configuracoes: React.FC = () => {
         const deviceInfo = bluetoothPrinter.getDeviceInfo()
         setConnectedDevice(deviceInfo)
         updateConfig('impressora', 'tipo', 'bluetooth')
+        // Persistir dispositivo no backend para reconexão futura
+        if (deviceInfo) {
+          await api.updateConfiguracaoCategoria('impressora', {
+            bluetoothDeviceId: deviceInfo.id,
+            bluetoothDeviceName: deviceInfo.name,
+            lembrarDispositivo: true,
+            reconectarAutomaticamente: true
+          })
+          // Atualizar serviço com o deviceId lembrado
+          bluetoothPrinter.setRememberedDevice(deviceInfo.id)
+        }
         alert('Impressora conectada com sucesso!')
       } else {
         alert('Falha ao conectar com a impressora')

@@ -121,18 +121,19 @@ class ApiClient {
 
   // Configurações
   async getConfiguracoes() {
-    return this.request('/configuracoes')
+    // Rota backend atual está como 'configuraoes' (sem cedilha)
+    return this.request('/configuraoes')
   }
 
   async updateConfiguracoes(configuracoes: any) {
-    return this.request('/configuracoes', {
+    return this.request('/configuraoes', {
       method: 'PUT',
       body: JSON.stringify(configuracoes),
     })
   }
 
   async updateConfiguracaoCategoria(categoria: string, dados: any) {
-    return this.request(`/configuracoes/${categoria}`, {
+    return this.request(`/configuraoes/${categoria}`, {
       method: 'PUT',
       body: JSON.stringify(dados),
     })
