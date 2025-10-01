@@ -1,0 +1,103 @@
+
+{
+  "name": "produtos",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["nome", "categoria", "preco", "disponivel", "criadoEm"],
+        "properties": {
+          "nome": {
+            "bsonType": "string",
+            "description": "Nome do produto"
+          },
+          "descricao": {
+            "bsonType": "string",
+            "description": "Descrição detalhada do produto"
+          },
+          "categoria": {
+            "bsonType": "string",
+            "enum": ["pizzas", "pasteis", "lanches_na_chapa", "salgados", "bolo", "bebidas"],
+            "description": "Categoria do produto"
+          },
+          "preco": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Preço do produto em reais"
+          },
+          "precoPromocional": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Preço promocional se aplicável"
+          },
+          "disponivel": {
+            "bsonType": "bool",
+            "description": "Produto disponível para venda"
+          },
+          "estoque": {
+            "bsonType": "int",
+            "minimum": 0,
+            "description": "Quantidade em estoque"
+          },
+          "imagemUrl": {
+            "bsonType": "string",
+            "description": "URL da imagem do produto"
+          },
+          "ingredientes": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "string"
+            },
+            "description": "Lista de ingredientes"
+          },
+          "sabor": {
+            "bsonType": "string",
+            "description": "Sabor específico do produto (especialmente para pizzas)"
+          },
+          "tamanhos": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "object",
+              "properties": {
+                "nome": { "bsonType": "string" },
+                "preco": { "bsonType": "number" },
+                "descricao": { "bsonType": "string" }
+              }
+            },
+            "description": "Tamanhos disponíveis com preços e descrições"
+          },
+          "temVariacoes": {
+            "bsonType": "bool",
+            "description": "Indica se o produto tem variações de tamanho/preço"
+          },
+          "tempoPreparoMinutos": {
+            "bsonType": "int",
+            "minimum": 1,
+            "description": "Tempo de preparo em minutos"
+          },
+          "categoria_detalhada": {
+            "bsonType": "string",
+            "description": "Subcategoria específica"
+          },
+          "criador": {
+            "bsonType": "string",
+            "description": "Usuário que criou o produto"
+          },
+          "criadoEm": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação ISO 8601"
+          },
+          "atualizadoEm": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de atualização ISO 8601"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}

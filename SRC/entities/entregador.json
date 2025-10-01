@@ -1,0 +1,95 @@
+
+{
+  "name": "entregadores",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["nome", "telefone", "veiculo", "disponivel", "criadoEm"],
+        "properties": {
+          "nome": {
+            "bsonType": "string",
+            "description": "Nome completo do entregador"
+          },
+          "telefone": {
+            "bsonType": "string",
+            "description": "Telefone do entregador"
+          },
+          "email": {
+            "bsonType": "string",
+            "description": "Email do entregador"
+          },
+          "cpf": {
+            "bsonType": "string",
+            "description": "CPF do entregador"
+          },
+          "endereco": {
+            "bsonType": "object",
+            "properties": {
+              "rua": { "bsonType": "string" },
+              "numero": { "bsonType": "string" },
+              "bairro": { "bsonType": "string" },
+              "cidade": { "bsonType": "string" },
+              "cep": { "bsonType": "string" }
+            },
+            "description": "Endereço do entregador"
+          },
+          "veiculo": {
+            "bsonType": "object",
+            "properties": {
+              "tipo": { 
+                "bsonType": "string",
+                "enum": ["moto", "bicicleta", "carro", "a_pe"]
+              },
+              "modelo": { "bsonType": "string" },
+              "placa": { "bsonType": "string" },
+              "cor": { "bsonType": "string" }
+            },
+            "description": "Informações do veículo"
+          },
+          "disponivel": {
+            "bsonType": "bool",
+            "description": "Entregador disponível para entregas"
+          },
+          "entregasRealizadas": {
+            "bsonType": "int",
+            "minimum": 0,
+            "description": "Número total de entregas realizadas"
+          },
+          "avaliacaoMedia": {
+            "bsonType": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "description": "Avaliação média do entregador"
+          },
+          "dataAdmissao": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de admissão"
+          },
+          "observacoes": {
+            "bsonType": "string",
+            "description": "Observações sobre o entregador"
+          },
+          "criador": {
+            "bsonType": "string",
+            "description": "Usuário que cadastrou o entregador"
+          },
+          "criadoEm": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação ISO 8601"
+          },
+          "atualizadoEm": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de atualização ISO 8601"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}

@@ -1,0 +1,142 @@
+
+{
+  "name": "pedidos",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["numeroPedido", "clienteNome", "clienteTelefone", "itens", "total", "status", "criadoEm"],
+        "properties": {
+          "numeroPedido": {
+            "bsonType": "string",
+            "description": "Número único do pedido"
+          },
+          "clienteNome": {
+            "bsonType": "string",
+            "description": "Nome do cliente"
+          },
+          "clienteTelefone": {
+            "bsonType": "string",
+            "description": "Telefone do cliente"
+          },
+          "clienteEmail": {
+            "bsonType": "string",
+            "description": "Email do cliente"
+          },
+          "enderecoEntrega": {
+            "bsonType": "object",
+            "properties": {
+              "rua": { "bsonType": "string" },
+              "numero": { "bsonType": "string" },
+              "complemento": { "bsonType": "string" },
+              "bairro": { "bsonType": "string" },
+              "cidade": { "bsonType": "string" },
+              "cep": { "bsonType": "string" },
+              "referencia": { "bsonType": "string" }
+            },
+            "description": "Endereço completo de entrega"
+          },
+          "itens": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "object",
+              "properties": {
+                "produtoId": { "bsonType": "string" },
+                "nome": { "bsonType": "string" },
+                "quantidade": { "bsonType": "int", "minimum": 1 },
+                "precoUnitario": { "bsonType": "number" },
+                "precoTotal": { "bsonType": "number" },
+                "observacoes": { "bsonType": "string" },
+                "sabor": { "bsonType": "string" },
+                "tamanho": { "bsonType": "string" },
+                "tamanhoDetalhes": {
+                  "bsonType": "object",
+                  "properties": {
+                    "nome": { "bsonType": "string" },
+                    "preco": { "bsonType": "number" },
+                    "descricao": { "bsonType": "string" }
+                  }
+                }
+              }
+            },
+            "description": "Itens do pedido"
+          },
+          "subtotal": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Subtotal dos itens"
+          },
+          "taxaEntrega": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Taxa de entrega"
+          },
+          "desconto": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Valor do desconto aplicado"
+          },
+          "total": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Valor total do pedido"
+          },
+          "formaPagamento": {
+            "bsonType": "string",
+            "enum": ["dinheiro", "cartao_debito", "cartao_credito", "pix", "vale_refeicao"],
+            "description": "Forma de pagamento"
+          },
+          "trocoParaValor": {
+            "bsonType": "number",
+            "description": "Valor para troco quando pagamento em dinheiro"
+          },
+          "status": {
+            "bsonType": "string",
+            "enum": ["recebido", "confirmado", "preparando", "pronto", "saiu_entrega", "entregue", "cancelado"],
+            "description": "Status atual do pedido"
+          },
+          "tempoEstimadoMinutos": {
+            "bsonType": "int",
+            "minimum": 1,
+            "description": "Tempo estimado de entrega em minutos"
+          },
+          "observacoesPedido": {
+            "bsonType": "string",
+            "description": "Observações gerais do pedido"
+          },
+          "entregadorNome": {
+            "bsonType": "string",
+            "description": "Nome do entregador responsável"
+          },
+          "horarioSaidaEntrega": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Horário que saiu para entrega"
+          },
+          "horarioEntrega": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Horário da entrega"
+          },
+          "criador": {
+            "bsonType": "string",
+            "description": "Usuário que criou o pedido"
+          },
+          "criadoEm": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação ISO 8601"
+          },
+          "atualizadoEm": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de atualização ISO 8601"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}

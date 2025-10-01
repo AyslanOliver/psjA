@@ -1,0 +1,108 @@
+const mongoose = require('mongoose');
+const validator = require('validator');
+
+const enderecoSchema = new mongoose.Schema({
+  nome: {
+    type: String,
+    required: true
+  },
+  rua: {
+    type: String,
+    required: true
+  },
+  numero: {
+    type: String,
+    required: true
+  },
+  complemento: String,
+  bairro: {
+    type: String,
+    required: true
+  },
+  cidade: {
+    type: String,
+    required: true
+  },
+  cep: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^\d{5}-?\d{3}$/.test(v);
+      },
+      message: 'CEP inválido'
+    }
+  },
+  referencia: String,
+  principal: {
+    type: Boolean,
+    default: false
+  }
+});
+
+const clienteSchema = new mongoose.Schema({
+  nome: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  telefone: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^\(\d{2}\)\s\d{4,5}-\d{4}$/.test(v);
+      },
+      message: 'Telefone inválido'
+    }
+  },
+  email: {
+    type: String,
+    validate: {
+      validator: validator.isEmail,
+      message: 'Email inválido'
+    }
+  },
+  cpf: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        return !v || /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
+      },
+      message: 'CPF inválido'
+    }
+  },
+  dataNascimento: Date,
+  enderecos: [enderecoSchema],
+  ativo: {
+    type: Boolean,
+    default: true
+  },
+  totalPedidos: {
+    type: Number,
+    default: 0
+  },
+  valorTotalGasto: {
+    type: Number,
+    default: 0
+  },
+  ultimoPedido: Date,
+  observacoes: String
+}, {
+  timestamps: true
+});
+
+// Middleware para garantir apenas um endereço principal
+enderecoSchema.pre('save', async function(next) {
+  if (this.principal) {
+    const cliente = this.parent();
+    cliente.enderecos.forEach(endereco => {
+      if (endereco._id.toString() !== this._id.toString()) {
+        endereco.principal = false;
+      }
+    });
+  }
+  next();
+});
+
+module.exports = mongoose.model('Cliente', clienteSchema);
