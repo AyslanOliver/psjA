@@ -12,18 +12,19 @@ const Dashboard: React.FC = () => {
   // Calcular estatísticas
   const totalPedidos = pedidos.length
   const pedidosPendentes = pedidos.filter(p => p.status === 'pendente').length
-  const pedidosEmAndamento = pedidos.filter(p => p.status === 'em_andamento').length
+  const pedidosEmAndamento = pedidos.filter(p => p.status === 'em_andamento' || p.status === 'preparando').length
   const pedidosEntregues = pedidos.filter(p => p.status === 'entregue').length
   
   const totalProdutos = produtos.length
-  const produtosAtivos = produtos.filter(p => p.disponivel).length
+  const produtosAtivos = produtos.filter(p => p.disponivel !== false).length
   
   const totalEntregadores = entregadores.length
-  const entregadoresDisponiveis = entregadores.filter(e => e.disponivel).length
+  const entregadoresDisponiveis = entregadores.filter(e => (e as any).disponivel === true || (e as any).status === 'disponivel').length
 
   // Pedidos recentes (últimos 5)
   const pedidosRecentes = pedidos
-    .sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime())
+    .slice()
+    .sort((a: any, b: any) => new Date(b.criadoEm || b.dataHora || b.atualizadoEm || 0).getTime() - new Date(a.criadoEm || a.dataHora || a.atualizadoEm || 0).getTime())
     .slice(0, 5)
 
   const getStatusColor = (status: string) => {
@@ -143,13 +144,13 @@ const Dashboard: React.FC = () => {
           <div className="p-6">
             {pedidosRecentes.length > 0 ? (
               <div className="space-y-4">
-                {pedidosRecentes.map((pedido) => (
+                {pedidosRecentes.map((pedido: any) => (
                   <div key={pedido._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                    <p className="font-medium text-gray-900">Pedido #{pedido.numeroPedido}</p>
-                    <p className="text-sm text-gray-600">{pedido.clienteNome}</p>
+                    <p className="font-medium text-gray-900">Pedido #{pedido.numeroPedido || (pedido._id ? `PED-${String(pedido._id).slice(-6)}` : '')}</p>
+                    <p className="text-sm text-gray-600">{pedido.clienteNome || pedido.cliente?.nome || 'Cliente não informado'}</p>
                     <p className="text-sm text-gray-500">
-                      {new Date(pedido.criadoEm).toLocaleDateString('pt-BR')}
+                      {new Date(pedido.criadoEm || pedido.dataHora || Date.now()).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <div className="text-right">
@@ -157,7 +158,7 @@ const Dashboard: React.FC = () => {
                       {getStatusText(pedido.status)}
                     </span>
                     <p className="text-sm font-medium text-gray-900 mt-1">
-                      R$ {pedido.total?.toFixed(2) ?? '0.00'}
+                      R$ {Number((pedido.total ?? pedido.valorTotal) || 0).toFixed(2)}
                     </p>
                   </div>
                   </div>

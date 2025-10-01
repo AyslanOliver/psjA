@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useEntregadores } from '../hooks/useEntregadores'
 
 const Entregadores: React.FC = () => {
-  const { entregadores, loading, createEntregador } = useEntregadores()
+  const { entregadores, loading, createEntregador, toggleDisponibilidade, deleteEntregador, updateEntregador } = useEntregadores()
   const [showModal, setShowModal] = useState(false)
   const [filtroStatus, setFiltroStatus] = useState('')
   const [busca, setBusca] = useState('')
@@ -42,8 +42,8 @@ const Entregadores: React.FC = () => {
 
   const entregadoresFiltrados = entregadores.filter(entregador => {
     const matchStatus = !filtroStatus || 
-      (filtroStatus === 'disponivel' && entregador.disponivel) ||
-      (filtroStatus === 'indisponivel' && !entregador.disponivel)
+      (filtroStatus === 'disponivel' && (entregador.disponivel === true || (entregador as any).status === 'disponivel')) ||
+      (filtroStatus === 'indisponivel' && (entregador.disponivel === false || (entregador as any).status !== 'disponivel'))
     const matchBusca = !busca || entregador.nome.toLowerCase().includes(busca.toLowerCase())
     return matchStatus && matchBusca
   })
@@ -53,8 +53,32 @@ const Entregadores: React.FC = () => {
     return veiculo || { label: tipo, icon: '🚚' }
   }
 
-  const handleToggleDisponibilidade = (entregadorId: string) => {
-    console.log(`Alterando disponibilidade do entregador ${entregadorId}`)
+  const handleToggleDisponibilidade = async (entregadorId: string, disponivelAtual?: boolean) => {
+    try {
+      await toggleDisponibilidade(entregadorId, !(disponivelAtual === true))
+    } catch (err) {
+      console.error('Erro ao alternar disponibilidade:', err)
+      alert('Falha ao alterar disponibilidade')
+    }
+  }
+
+  const handleDelete = async (entregadorId: string) => {
+    if (!confirm('Deseja realmente excluir este entregador?')) return
+    try {
+      await deleteEntregador(entregadorId)
+    } catch (err) {
+      console.error('Erro ao excluir entregador:', err)
+      alert('Falha ao excluir entregador')
+    }
+  }
+
+  const handleEditBasic = async (entregadorId: string) => {
+    // Exemplo simples: alternar ativo para true ao editar rápido (pode ser expandido depois com modal)
+    try {
+      await updateEntregador(entregadorId, { ativo: true })
+    } catch (err) {
+      console.error('Erro ao atualizar entregador:', err)
+    }
   }
 
   const resetForm = () => {
@@ -344,6 +368,7 @@ const Entregadores: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {entregadoresFiltrados.map((entregador) => {
                 const veiculoInfo = getTipoVeiculoInfo(entregador.veiculo?.tipo || 'moto')
+                const isDisponivel = (entregador.disponivel === true) || ((entregador as any).status === 'disponivel')
                 return (
                   <div key={entregador._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-4">
@@ -353,11 +378,11 @@ const Entregadores: React.FC = () => {
                         </h3>
                         <div className="flex items-center space-x-2 mb-3">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            entregador.disponivel 
+                            isDisponivel 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {entregador.disponivel ? 'Disponível' : 'Indisponível'}
+                            {isDisponivel ? 'Disponível' : 'Indisponível'}
                           </span>
                           <div className="flex items-center space-x-1">
                             <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20">
@@ -417,23 +442,23 @@ const Entregadores: React.FC = () => {
 
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => handleToggleDisponibilidade(entregador._id!)}
+                        onClick={() => handleToggleDisponibilidade(entregador._id!, entregador.disponivel)}
                         className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          entregador.disponivel
+                          isDisponivel
                             ? 'bg-red-100 text-red-700 hover:bg-red-200'
                             : 'bg-green-100 text-green-700 hover:bg-green-200'
                         }`}
                       >
-                        {entregador.disponivel ? 'Desativar' : 'Ativar'}
+                        {isDisponivel ? 'Desativar' : 'Ativar'}
                       </button>
                       
-                      <button className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
+                      <button onClick={() => handleEditBasic(entregador._id!)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
                       
-                      <button className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
+                      <button onClick={() => handleDelete(entregador._id!)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>

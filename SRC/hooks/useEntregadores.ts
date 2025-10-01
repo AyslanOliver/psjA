@@ -58,10 +58,55 @@ export const useEntregadores = () => {
     }
   }, [])
 
+  // Helpers de formatação/validação
+  const formatTelefone = (tel: string) => {
+    const digits = (tel || '').replace(/\D/g, '')
+    if (digits.length === 11) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+    }
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+    }
+    return tel
+  }
+
+  const isTelefoneValido = (tel: string) => /^(\(\d{2}\)\s\d{4,5}-\d{4})$/.test(tel)
+
+  const formatCpf = (cpf: string) => {
+    const digits = (cpf || '').replace(/\D/g, '')
+    if (digits.length !== 11) return cpf
+    return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`
+  }
+
+  const isCpfValidoFormato = (cpf: string) => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf)
+
   const createEntregador = async (entregadorData: Omit<Entregador, '_id' | 'entregasRealizadas' | 'avaliacaoMedia'>) => {
     try {
+      // Normalizar telefone e CPF para o formato exigido pelo backend
+      const telefoneFormatado = formatTelefone(entregadorData.telefone)
+      const cpfFormatado = entregadorData.cpf ? formatCpf(entregadorData.cpf) : undefined
+
+      if (!isTelefoneValido(telefoneFormatado)) {
+        toast.error('Telefone inválido. Use (11) 99999-9999')
+        throw new Error('Telefone inválido')
+      }
+      if (cpfFormatado && !isCpfValidoFormato(cpfFormatado)) {
+        toast.error('CPF inválido. Use 000.000.000-00')
+        throw new Error('CPF inválido')
+      }
+      if (!entregadorData.email) {
+        toast.error('Email é obrigatório')
+        throw new Error('Email obrigatório')
+      }
+      if (!entregadorData.veiculo?.tipo) {
+        toast.error('Selecione o tipo de veículo')
+        throw new Error('Veículo tipo obrigatório')
+      }
+
       const novoEntregador = {
         ...entregadorData,
+        telefone: telefoneFormatado,
+        cpf: cpfFormatado || undefined,
         entregasRealizadas: 0,
         avaliacaoMedia: 0,
         criador: 'admin',

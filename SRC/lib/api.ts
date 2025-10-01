@@ -119,21 +119,33 @@ class ApiClient {
     })
   }
 
+  async updateEntregador(id: string, updates: any) {
+    return this.request(`/entregadores/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    })
+  }
+
+  async deleteEntregador(id: string) {
+    return this.request(`/entregadores/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Configurações
   async getConfiguracoes() {
-    // Rota backend atual está como 'configuraoes' (sem cedilha)
-    return this.request('/configuraoes')
+    return this.request('/configuracoes')
   }
 
   async updateConfiguracoes(configuracoes: any) {
-    return this.request('/configuraoes', {
+    return this.request('/configuracoes', {
       method: 'PUT',
       body: JSON.stringify(configuracoes),
     })
   }
 
   async updateConfiguracaoCategoria(categoria: string, dados: any) {
-    return this.request(`/configuraoes/${categoria}`, {
+    return this.request(`/configuracoes/${categoria}`, {
       method: 'PUT',
       body: JSON.stringify(dados),
     })
@@ -194,6 +206,12 @@ export const lumi = {
       },
       create: async (entregador: any) => {
         return await api.createEntregador(entregador)
+      },
+      patch: async (id: string, updates: any) => {
+        return await api.updateEntregador(id, updates)
+      },
+      delete: async (id: string) => {
+        return await api.deleteEntregador(id)
       }
     }
   }

@@ -218,20 +218,25 @@ const Entregas: React.FC = () => {
               {entregasFiltradas.map((pedido) => {
                 const tempoEntrega = calcularTempoEntrega(pedido.horarioSaidaEntrega)
                 
+                const numeroExibicao = pedido.numeroPedido || (pedido._id ? `PED-${String(pedido._id).slice(-6)}` : '#')
+                const nomeCliente = pedido.clienteNome || pedido.cliente?.nome || 'Cliente não informado'
+                const telCliente = pedido.clienteTelefone || pedido.cliente?.telefone || 'Telefone não informado'
+                const totalPedido = (typeof pedido.total === 'number' ? pedido.total : (typeof (pedido as any).valorTotal === 'number' ? (pedido as any).valorTotal : 0))
+
                 return (
                   <div key={pedido._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     {/* Header do Card */}
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-2">
                         <span className="font-bold text-lg text-gray-900">
-                          #{pedido.numeroPedido}
+                          {numeroExibicao}
                         </span>
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(pedido.status)}`}>
                           {getStatusText(pedido.status)}
                         </span>
                       </div>
                       <span className="text-lg font-bold text-green-600">
-                        R$ {pedido.total.toFixed(2)}
+                        R$ {Number(totalPedido || 0).toFixed(2)}
                       </span>
                     </div>
 
@@ -241,14 +246,14 @@ const Entregas: React.FC = () => {
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <span className="font-medium text-gray-900">{pedido.clienteNome}</span>
+                        <span className="font-medium text-gray-900">{nomeCliente}</span>
                       </div>
                       
                       <div className="flex items-center space-x-2">
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
-                        <span className="text-gray-600">{pedido.clienteTelefone}</span>
+                        <span className="text-gray-600">{telCliente}</span>
                       </div>
 
                       <div className="flex items-start space-x-2">
@@ -257,13 +262,23 @@ const Entregas: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <div className="text-sm text-gray-600">
-                          <p>{pedido.enderecoEntrega.rua}, {pedido.enderecoEntrega.numero}</p>
-                          {pedido.enderecoEntrega.complemento && (
-                            <p>{pedido.enderecoEntrega.complemento}</p>
-                          )}
-                          <p>{pedido.enderecoEntrega.bairro} - {pedido.enderecoEntrega.cidade}</p>
-                          {pedido.enderecoEntrega.referencia && (
-                            <p className="text-blue-600">Ref: {pedido.enderecoEntrega.referencia}</p>
+                          {pedido.enderecoEntrega ? (
+                            <>
+                              <p>
+                                {(pedido.enderecoEntrega.rua || 'Rua não informada')}, {pedido.enderecoEntrega.numero || 's/n'}
+                              </p>
+                              {pedido.enderecoEntrega.complemento && (
+                                <p>{pedido.enderecoEntrega.complemento}</p>
+                              )}
+                              <p>
+                                {(pedido.enderecoEntrega.bairro || 'Bairro não informado')} - {(pedido.enderecoEntrega.cidade || 'Cidade não informada')}
+                              </p>
+                              {pedido.enderecoEntrega.referencia && (
+                                <p className="text-blue-600">Ref: {pedido.enderecoEntrega.referencia}</p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-gray-500">Endereço não informado</p>
                           )}
                         </div>
                       </div>
@@ -298,10 +313,10 @@ const Entregas: React.FC = () => {
                           <span className="text-gray-600">Pagamento:</span>
                           <span className="font-medium">{pedido.formaPagamento}</span>
                         </div>
-                        {pedido.trocoParaValor && (
+                        {typeof pedido.trocoParaValor === 'number' && pedido.trocoParaValor > 0 && (
                           <div className="flex justify-between items-center text-sm mt-1">
                             <span className="text-gray-600">Troco para:</span>
-                            <span className="font-medium text-red-600">R$ {pedido.trocoParaValor.toFixed(2)}</span>
+                            <span className="font-medium text-red-600">R$ {Number(pedido.trocoParaValor || 0).toFixed(2)}</span>
                           </div>
                         )}
                       </div>

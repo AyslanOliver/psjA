@@ -158,47 +158,47 @@ const Configuracoes: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      // Persistir dispositivo conectado, se houver
+      const tipoBackend = configuracoes.impressora.tipo === 'ethernet' ? 'wifi' : configuracoes.impressora.tipo
+      // Normalização/validação de Delivery conforme regras do backend
+      const taxaEntrega = Math.max(0, Number(configuracoes.delivery.taxaEntregaBase || 0))
+      const tempoMedioEntrega = Math.max(10, parseInt(String(configuracoes.delivery.tempoEstimadoMinutos || 0)))
+      const raioEntrega = Math.max(1, parseInt(String(configuracoes.delivery.raioEntregaKm || 0)))
+      const pedidoMinimo = Math.max(0, Number(configuracoes.delivery.valorMinimoEntrega || 0))
+
+      // Sempre persistir todas as seções (inclui delivery)
+      await api.updateConfiguracoes({
+        loja: configuracoes.loja,
+        delivery: {
+          taxaEntrega,
+          tempoMedioEntrega,
+          raioEntrega,
+          pedidoMinimo
+        },
+        pagamento: {
+          aceitaDinheiro: configuracoes.pagamento.aceitaDinheiro,
+          aceitaCartao: configuracoes.pagamento.aceitaCartao,
+          aceitaPix: configuracoes.pagamento.aceitaPix
+        },
+        notificacoes: {
+          email: configuracoes.notificacoes.emailNovoPedido,
+          sms: configuracoes.notificacoes.smsStatusPedido,
+          whatsapp: configuracoes.notificacoes.whatsappConfirmacao
+        },
+        sistema: configuracoes.sistema,
+        impressora: {
+          ...configuracoes.impressora,
+          tipo: tipoBackend
+        }
+      })
+
+      // Se houver dispositivo conectado, persistir dados específicos da impressora
       if (connectedDevice) {
-        setConfiguracoes(prev => ({
-          ...prev,
-          impressora: {
-            ...prev.impressora,
-            tipo: 'bluetooth'
-          }
-        }))
-        // Atualizar no backend alguns campos de impressora
         await api.updateConfiguracaoCategoria('impressora', {
-          habilitada: configuracoes.impressora.habilitada,
           tipo: 'bluetooth',
-          larguraPapel: configuracoes.impressora.larguraPapel,
-          cortarPapel: configuracoes.impressora.cortarPapel,
-          imprimirLogo: configuracoes.impressora.imprimirLogo,
-          logoUrl: configuracoes.impressora.logoUrl,
-          rodape: configuracoes.impressora.rodape
-        })
-      } else {
-        // Atualizar demais seções completas
-        await api.updateConfiguracoes({
-          loja: configuracoes.loja,
-          delivery: {
-            taxaEntrega: configuracoes.delivery.taxaEntregaBase,
-            tempoMedioEntrega: configuracoes.delivery.tempoEstimadoMinutos,
-            raioEntrega: configuracoes.delivery.raioEntregaKm,
-            pedidoMinimo: configuracoes.delivery.valorMinimoEntrega
-          },
-          pagamento: {
-            aceitaDinheiro: configuracoes.pagamento.aceitaDinheiro,
-            aceitaCartao: configuracoes.pagamento.aceitaCartao,
-            aceitaPix: configuracoes.pagamento.aceitaPix
-          },
-          notificacoes: {
-            email: configuracoes.notificacoes.emailNovoPedido,
-            sms: configuracoes.notificacoes.smsStatusPedido,
-            whatsapp: configuracoes.notificacoes.whatsappConfirmacao
-          },
-          sistema: configuracoes.sistema,
-          impressora: configuracoes.impressora
+          bluetoothDeviceId: connectedDevice.id,
+          bluetoothDeviceName: connectedDevice.name,
+          lembrarDispositivo: true,
+          reconectarAutomaticamente: true
         })
       }
 
