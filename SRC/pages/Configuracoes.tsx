@@ -78,14 +78,15 @@ interface ConfiguracaoSistema {
 const Configuracoes: React.FC = () => {
   const [activeTab, setActiveTab] = useState('loja')
   const [showSaveMessage, setShowSaveMessage] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   
   // Estados para gerenciamento da impressora Bluetooth
-  const [, setBluetoothDevices] = useState<BluetoothDevice[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [bluetoothDevices, setBluetoothDevices] = useState<BluetoothDevice[]>([])
   const [isScanning, setIsScanning] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null)
   const [bluetoothSupported, setBluetoothSupported] = useState(false)
+  const [bluetoothLoading, setBluetoothLoading] = useState(true)
   
   const [configuracoes, setConfiguracoes] = useState<ConfiguracaoSistema>({
     loja: {
@@ -147,71 +148,29 @@ const Configuracoes: React.FC = () => {
     { id: 'delivery', label: 'Delivery', icon: Truck },
     { id: 'pagamento', label: 'Pagamento', icon: DollarSign },
     { id: 'notificacoes', label: 'Notificações', icon: Bell },
-    { id: 'impressora', label: 'Impressora POS58', icon: Printer },
-    { id: 'sistema', label: 'Sistema', icon: Settings }
+    { id: 'impressora', label: 'Impressora', icon: Printer },
+    { id: 'sistema', label: 'Sistema', icon: Settings },
+    { id: 'dados', label: 'Dados', icon: Database }
   ]
 
   const diasSemana = [
-    { value: 'segunda', label: 'Segunda-feira' },
-    { value: 'terca', label: 'Terça-feira' },
-    { value: 'quarta', label: 'Quarta-feira' },
-    { value: 'quinta', label: 'Quinta-feira' },
-    { value: 'sexta', label: 'Sexta-feira' },
-    { value: 'sabado', label: 'Sábado' },
-    { value: 'domingo', label: 'Domingo' }
+    { value: 'segunda', label: 'Seg' },
+    { value: 'terca', label: 'Ter' },
+    { value: 'quarta', label: 'Qua' },
+    { value: 'quinta', label: 'Qui' },
+    { value: 'sexta', label: 'Sex' },
+    { value: 'sabado', label: 'Sáb' },
+    { value: 'domingo', label: 'Dom' }
   ]
 
   const handleSave = async () => {
     try {
-      const tipoBackend = configuracoes.impressora.tipo === 'ethernet' ? 'wifi' : configuracoes.impressora.tipo
-      // Normalização/validação de Delivery conforme regras do backend
-      const taxaEntrega = Math.max(0, Number(configuracoes.delivery.taxaEntregaBase || 0))
-      const tempoMedioEntrega = Math.max(10, parseInt(String(configuracoes.delivery.tempoEstimadoMinutos || 0)))
-      const raioEntrega = Math.max(1, parseInt(String(configuracoes.delivery.raioEntregaKm || 0)))
-      const pedidoMinimo = Math.max(0, Number(configuracoes.delivery.valorMinimoEntrega || 0))
-
-      // Sempre persistir todas as seções (inclui delivery)
-      await api.updateConfiguracoes({
-        loja: configuracoes.loja,
-        delivery: {
-          taxaEntrega,
-          tempoMedioEntrega,
-          raioEntrega,
-          pedidoMinimo
-        },
-        pagamento: {
-          aceitaDinheiro: configuracoes.pagamento.aceitaDinheiro,
-          aceitaCartao: configuracoes.pagamento.aceitaCartao,
-          aceitaPix: configuracoes.pagamento.aceitaPix
-        },
-        notificacoes: {
-          email: configuracoes.notificacoes.emailNovoPedido,
-          sms: configuracoes.notificacoes.smsStatusPedido,
-          whatsapp: configuracoes.notificacoes.whatsappConfirmacao
-        },
-        sistema: configuracoes.sistema,
-        impressora: {
-          ...configuracoes.impressora,
-          tipo: tipoBackend
-        }
-      })
-
-      // Se houver dispositivo conectado, persistir dados específicos da impressora
-      if (connectedDevice) {
-        await api.updateConfiguracaoCategoria('impressora', {
-          tipo: 'bluetooth',
-          bluetoothDeviceId: connectedDevice.id,
-          bluetoothDeviceName: connectedDevice.name,
-          lembrarDispositivo: true,
-          reconectarAutomaticamente: true
-        })
-      }
-
+      await api.updateConfiguracoes(configuracoes)
       setShowSaveMessage(true)
       setTimeout(() => setShowSaveMessage(false), 3000)
     } catch (error) {
       console.error('Erro ao salvar configurações:', error)
-      alert('Falha ao salvar configurações. Verifique a API.')
+      alert('Falha ao salvar configurações.')
     }
   }
 
@@ -249,75 +208,25 @@ const Configuracoes: React.FC = () => {
 
   // Funções para gerenciamento da impressora Bluetooth
   useEffect(() => {
-    setBluetoothSupported(bluetoothManager.isBluetoothAvailable())
-    
-    // Carregar configurações do backend ao montar
-    ;(async () => {
+    const initBluetooth = async () => {
+      setBluetoothLoading(true)
       try {
-        const data = await api.getConfiguracoes()
-        // Mapear campos do backend -> frontend
-        setConfiguracoes(prev => ({
-          ...prev,
-          loja: {
-            ...prev.loja,
-            nome: data.loja?.nome ?? prev.loja.nome,
-            telefone: data.loja?.telefone ?? prev.loja.telefone,
-            email: data.loja?.email ?? prev.loja.email,
-            endereco: {
-              rua: data.loja?.endereco?.rua ?? prev.loja.endereco.rua,
-              numero: data.loja?.endereco?.numero ?? prev.loja.endereco.numero,
-              bairro: data.loja?.endereco?.bairro ?? prev.loja.endereco.bairro,
-              cidade: data.loja?.endereco?.cidade ?? prev.loja.endereco.cidade,
-              cep: data.loja?.endereco?.cep ?? prev.loja.endereco.cep
-            },
-            horarioFuncionamento: prev.loja.horarioFuncionamento
-          },
-          delivery: {
-            taxaEntregaBase: data.delivery?.taxaEntrega ?? prev.delivery.taxaEntregaBase,
-            tempoEstimadoMinutos: data.delivery?.tempoMedioEntrega ?? prev.delivery.tempoEstimadoMinutos,
-            raioEntregaKm: data.delivery?.raioEntrega ?? prev.delivery.raioEntregaKm,
-            valorMinimoEntrega: data.delivery?.pedidoMinimo ?? prev.delivery.valorMinimoEntrega
-          },
-          pagamento: {
-            aceitaDinheiro: data.pagamento?.aceitaDinheiro ?? prev.pagamento.aceitaDinheiro,
-            aceitaCartao: data.pagamento?.aceitaCartao ?? prev.pagamento.aceitaCartao,
-            aceitaPix: data.pagamento?.aceitaPix ?? prev.pagamento.aceitaPix,
-            trocoMaximo: prev.pagamento.trocoMaximo
-          },
-          notificacoes: {
-            emailNovoPedido: data.notificacoes?.email ?? prev.notificacoes.emailNovoPedido,
-            smsStatusPedido: data.notificacoes?.sms ?? prev.notificacoes.smsStatusPedido,
-            whatsappConfirmacao: data.notificacoes?.whatsapp ?? prev.notificacoes.whatsappConfirmacao
-          },
-          impressora: {
-            ...prev.impressora,
-            habilitada: data.impressora?.habilitada ?? prev.impressora.habilitada,
-            tipo: (data.impressora?.tipo === 'wifi' ? 'ethernet' : data.impressora?.tipo) ?? prev.impressora.tipo,
-            porta: data.impressora?.porta ?? prev.impressora.porta,
-            ip: data.impressora?.ip ?? prev.impressora.ip,
-            larguraPapel: data.impressora?.larguraPapel ?? prev.impressora.larguraPapel,
-            cortarPapel: data.impressora?.cortarPapel ?? prev.impressora.cortarPapel,
-            imprimirLogo: data.impressora?.imprimirLogo ?? prev.impressora.imprimirLogo,
-            logoUrl: data.impressora?.logoUrl ?? prev.impressora.logoUrl,
-            rodape: data.impressora?.rodape ?? prev.impressora.rodape
-          },
-          sistema: {
-            ...prev.sistema,
-            tema: data.sistema?.tema ?? prev.sistema.tema,
-            idioma: data.sistema?.idioma ?? prev.sistema.idioma,
-            timezone: data.sistema?.timezone ?? prev.sistema.timezone,
-            backupAutomatico: data.sistema?.backupAutomatico ?? prev.sistema.backupAutomatico
-          }
-        }))
-
-        // Definir dispositivo lembrado para reconexão automática
-        if (data.impressora?.bluetoothDeviceId) {
-          bluetoothManager.setRememberedDevice(data.impressora.bluetoothDeviceId)
+        // Usar a verificação assíncrona para Cordova
+        const isSupported = await bluetoothManager.isBluetoothAvailableAsync()
+        setBluetoothSupported(isSupported)
+        
+        if (!isSupported) {
+          console.log('Bluetooth não suportado ou plugin não carregado')
         }
-      } catch (err) {
-        console.error('Erro ao carregar configurações:', err)
+      } catch (error) {
+        console.error('Erro ao verificar Bluetooth:', error)
+        setBluetoothSupported(false)
+      } finally {
+        setBluetoothLoading(false)
       }
-    })()
+    }
+
+    initBluetooth()
 
     // Verificar se já existe uma conexão ativa
     const deviceInfo = bluetoothManager.getDeviceInfo()
@@ -326,7 +235,8 @@ const Configuracoes: React.FC = () => {
     }
   }, [])
 
-  const handleScanDevices = async () => {
+  // Função para buscar dispositivos Bluetooth
+  const scanBluetoothDevices = async () => {
     if (!bluetoothSupported) {
       alert('Bluetooth não está disponível neste dispositivo')
       return
@@ -338,7 +248,7 @@ const Configuracoes: React.FC = () => {
       setBluetoothDevices(devices)
     } catch (error) {
       console.error('Erro ao buscar dispositivos:', error)
-      alert('Erro ao buscar dispositivos Bluetooth. Verifique se o Bluetooth está ativado.')
+      alert('Erro ao buscar dispositivos Bluetooth')
     } finally {
       setIsScanning(false)
     }
@@ -394,6 +304,304 @@ const Configuracoes: React.FC = () => {
 
       {/* Content */}
       <div className="p-4 pb-20">
+        {/* Loja Tab */}
+        {activeTab === 'loja' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações da Loja</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nome da Loja</label>
+                  <input
+                    type="text"
+                    value={configuracoes.loja.nome}
+                    onChange={(e) => updateConfig('loja', 'nome', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                    <input
+                      type="tel"
+                      value={configuracoes.loja.telefone}
+                      onChange={(e) => updateConfig('loja', 'telefone', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={configuracoes.loja.email}
+                      onChange={(e) => updateConfig('loja', 'email', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rua</label>
+                    <input
+                      type="text"
+                      value={configuracoes.loja.endereco.rua}
+                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'rua', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Número</label>
+                    <input
+                      type="text"
+                      value={configuracoes.loja.endereco.numero}
+                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'numero', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Bairro</label>
+                    <input
+                      type="text"
+                      value={configuracoes.loja.endereco.bairro}
+                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'bairro', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Cidade</label>
+                    <input
+                      type="text"
+                      value={configuracoes.loja.endereco.cidade}
+                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'cidade', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">CEP</label>
+                    <input
+                      type="text"
+                      value={configuracoes.loja.endereco.cep}
+                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'cep', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Horário de Funcionamento</label>
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Abertura</label>
+                      <input
+                        type="time"
+                        value={configuracoes.loja.horarioFuncionamento.abertura}
+                        onChange={(e) => updateNestedConfig('loja', 'horarioFuncionamento', 'abertura', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Fechamento</label>
+                      <input
+                        type="time"
+                        value={configuracoes.loja.horarioFuncionamento.fechamento}
+                        onChange={(e) => updateNestedConfig('loja', 'horarioFuncionamento', 'fechamento', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-2">Dias de Funcionamento</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {diasSemana.map((dia) => (
+                        <label key={dia.value} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={configuracoes.loja.horarioFuncionamento.diasSemana.includes(dia.value)}
+                            onChange={() => toggleDiaSemana(dia.value)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{dia.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery Tab */}
+        {activeTab === 'delivery' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Configurações de Entrega</h2>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Taxa de Entrega (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={configuracoes.delivery.taxaEntregaBase}
+                      onChange={(e) => updateConfig('delivery', 'taxaEntregaBase', parseFloat(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tempo Estimado (min)</label>
+                    <input
+                      type="number"
+                      value={configuracoes.delivery.tempoEstimadoMinutos}
+                      onChange={(e) => updateConfig('delivery', 'tempoEstimadoMinutos', parseInt(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Raio de Entrega (km)</label>
+                    <input
+                      type="number"
+                      value={configuracoes.delivery.raioEntregaKm}
+                      onChange={(e) => updateConfig('delivery', 'raioEntregaKm', parseInt(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Valor Mínimo (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={configuracoes.delivery.valorMinimoEntrega}
+                      onChange={(e) => updateConfig('delivery', 'valorMinimoEntrega', parseFloat(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pagamento Tab */}
+        {activeTab === 'pagamento' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Formas de Pagamento</h2>
+              
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={configuracoes.pagamento.aceitaDinheiro}
+                      onChange={(e) => updateConfig('pagamento', 'aceitaDinheiro', e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700">Aceitar Dinheiro</span>
+                  </label>
+
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={configuracoes.pagamento.aceitaCartao}
+                      onChange={(e) => updateConfig('pagamento', 'aceitaCartao', e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700">Aceitar Cartão</span>
+                  </label>
+
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={configuracoes.pagamento.aceitaPix}
+                      onChange={(e) => updateConfig('pagamento', 'aceitaPix', e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700">Aceitar PIX</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Valor Máximo para Troco (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={configuracoes.pagamento.trocoMaximo}
+                    onChange={(e) => updateConfig('pagamento', 'trocoMaximo', parseFloat(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notificações Tab */}
+        {activeTab === 'notificacoes' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Preferências de Notificação</h2>
+              
+              <div className="space-y-4">
+                <label className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={configuracoes.notificacoes.emailNovoPedido}
+                    onChange={(e) => updateConfig('notificacoes', 'emailNovoPedido', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+                  />
+                  <div>
+                    <span className="text-gray-700 font-medium">Email para Novos Pedidos</span>
+                    <p className="text-sm text-gray-500">Receber email quando um novo pedido for criado</p>
+                  </div>
+                </label>
+
+                <label className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={configuracoes.notificacoes.smsStatusPedido}
+                    onChange={(e) => updateConfig('notificacoes', 'smsStatusPedido', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+                  />
+                  <div>
+                    <span className="text-gray-700 font-medium">SMS para Status do Pedido</span>
+                    <p className="text-sm text-gray-500">Enviar SMS quando o status do pedido mudar</p>
+                  </div>
+                </label>
+
+                <label className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={configuracoes.notificacoes.whatsappConfirmacao}
+                    onChange={(e) => updateConfig('notificacoes', 'whatsappConfirmacao', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+                  />
+                  <div>
+                    <span className="text-gray-700 font-medium">WhatsApp para Confirmações</span>
+                    <p className="text-sm text-gray-500">Enviar confirmações via WhatsApp</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Impressora Tab - Otimizada para Mobile */}
         {activeTab === 'impressora' && (
           <div className="space-y-4">
@@ -488,6 +696,59 @@ const Configuracoes: React.FC = () => {
           </div>
         )}
 
+        {/* Sistema Tab */}
+        {activeTab === 'sistema' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Configurações do Sistema</h2>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tema</label>
+                    <select
+                      value={configuracoes.sistema.tema}
+                      onChange={(e) => updateConfig('sistema', 'tema', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="claro">Claro</option>
+                      <option value="escuro">Escuro</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Idioma</label>
+                    <select
+                      value={configuracoes.sistema.idioma}
+                      onChange={(e) => updateConfig('sistema', 'idioma', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="pt-BR">Português (Brasil)</option>
+                      <option value="en-US">English (US)</option>
+                      <option value="es-ES">Español</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={configuracoes.sistema.backupAutomatico}
+                      onChange={(e) => updateConfig('sistema', 'backupAutomatico', e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <span className="text-gray-700 font-medium">Backup Automático</span>
+                      <p className="text-sm text-gray-500">Realizar backup automático dos dados diariamente</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Dados Tab - Nova aba para importação */}
         {activeTab === 'dados' && (
           <div className="space-y-4">
@@ -525,14 +786,12 @@ const Configuracoes: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* ... outras tabs existentes ... */}
       </div>
 
       {/* Botão Salvar Fixo */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
         <button
-          onClick={() => {/* função salvar */}}
+          onClick={handleSave}
           className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Save className="h-4 w-4" />
