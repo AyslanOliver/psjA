@@ -102,6 +102,55 @@ pedidoSchema.pre('save', async function(next) {
   next();
 });
 
+// Middleware para atualizar contador de entregas do entregador
+pedidoSchema.post('save', async function(doc) {
+  // Se o status mudou para 'entregue' e há um entregador associado
+  if (doc.status === 'entregue' && doc.entregador) {
+    try {
+      const Entregador = mongoose.model('Entregador');
+      
+      // Conta o total de entregas realizadas por este entregador
+      const totalEntregas = await mongoose.model('Pedido').countDocuments({
+        entregador: doc.entregador,
+        status: 'entregue'
+      });
+      
+      // Atualiza o campo totalEntregas no entregador
+      await Entregador.findByIdAndUpdate(doc.entregador, {
+        totalEntregas: totalEntregas
+      });
+      
+      console.log(`Contador de entregas atualizado para entregador ${doc.entregador}: ${totalEntregas} entregas`);
+    } catch (error) {
+      console.error('Erro ao atualizar contador de entregas:', error);
+    }
+  }
+});
+
+// Middleware para atualizar contador quando status muda via findOneAndUpdate
+pedidoSchema.post('findOneAndUpdate', async function(doc) {
+  if (doc && doc.status === 'entregue' && doc.entregador) {
+    try {
+      const Entregador = mongoose.model('Entregador');
+      
+      // Conta o total de entregas realizadas por este entregador
+      const totalEntregas = await mongoose.model('Pedido').countDocuments({
+        entregador: doc.entregador,
+        status: 'entregue'
+      });
+      
+      // Atualiza o campo totalEntregas no entregador
+      await Entregador.findByIdAndUpdate(doc.entregador, {
+        totalEntregas: totalEntregas
+      });
+      
+      console.log(`Contador de entregas atualizado para entregador ${doc.entregador}: ${totalEntregas} entregas`);
+    } catch (error) {
+      console.error('Erro ao atualizar contador de entregas:', error);
+    }
+  }
+});
+
 // Método para calcular valor total
 pedidoSchema.methods.calcularTotal = function() {
   this.valorSubtotal = this.items.reduce((total, item) => {

@@ -67,6 +67,10 @@ const entregadorSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  disponivel: {
+    type: Boolean,
+    default: true
+  },
   avaliacaoMedia: {
     type: Number,
     default: 5,

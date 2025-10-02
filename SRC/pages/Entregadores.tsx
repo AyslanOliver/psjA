@@ -75,7 +75,8 @@ const Entregadores: React.FC = () => {
   const handleEditBasic = async (entregadorId: string) => {
     // Exemplo simples: alternar ativo para true ao editar rápido (pode ser expandido depois com modal)
     try {
-      await updateEntregador(entregadorId, { ativo: true })
+      // “Ativo” não existe no tipo; troque por disponível ou outro campo válido
+      await updateEntregador(entregadorId, { disponivel: true })
     } catch (err) {
       console.error('Erro ao atualizar entregador:', err)
     }
@@ -190,7 +191,7 @@ const Entregadores: React.FC = () => {
   const calcularEstatisticas = () => {
     const totalEntregadores = entregadores.length
     const disponiveis = entregadores.filter(e => e.disponivel).length
-    const totalEntregas = entregadores.reduce((acc, e) => acc + (e.entregasRealizadas || 0), 0)
+    const totalEntregas = entregadores.reduce((acc, e) => acc + (e.totalEntregas || e.entregasRealizadas || 0), 0)
     const avaliacaoMedia = entregadores.length > 0 
       ? entregadores.reduce((acc, e) => acc + (e.avaliacaoMedia || 0), 0) / entregadores.length
 
@@ -429,7 +430,7 @@ const Entregadores: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                       <div className="text-center p-2 bg-gray-50 rounded-lg">
-                        <div className="font-semibold text-gray-900">{entregador.entregasRealizadas || 0}</div>
+                        <div className="font-semibold text-gray-900">{entregador.totalEntregas || entregador.entregasRealizadas || 0}</div>
                         <div className="text-gray-600">Entregas</div>
                       </div>
                       <div className="text-center p-2 bg-gray-50 rounded-lg">

@@ -1,7 +1,7 @@
 
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import {LayoutDashboard, Package, ShoppingCart, Users, Truck, BarChart3, Settings, ChefHat} from 'lucide-react'
+import {LayoutDashboard, Package, ShoppingCart, Users, Truck, BarChart3, Settings, ChefHat, UserCheck} from 'lucide-react'
 
 const Sidebar: React.FC = () => {
   const location = useLocation()
@@ -10,6 +10,7 @@ const Sidebar: React.FC = () => {
     { path: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/produtos', icon: Package, label: 'Produtos' },
     { path: '/pedidos', icon: ShoppingCart, label: 'Pedidos' },
+    { path: '/clientes', icon: UserCheck, label: 'Clientes' },
     { path: '/entregadores', icon: Users, label: 'Entregadores' },
     { path: '/entregas', icon: Truck, label: 'Entregas' },
     { path: '/relatorios', icon: BarChart3, label: 'Relatórios' },

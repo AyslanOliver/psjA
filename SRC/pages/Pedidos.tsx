@@ -1,13 +1,15 @@
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { usePedidos } from '../hooks/usePedidos'
 import { useProdutos } from '../hooks/useProdutos'
+import { useClientes } from '../hooks/useClientes'
 import { getTamanhosDisponiveis, getPizzaPrice, SABORES_DISPONIVEIS, isSaborEspecial } from '../config/pizzaPricing'
 import { bluetoothPrinter } from '../utils/bluetoothPrinter'
 
 const Pedidos: React.FC = () => {
   const { pedidos, loading, createPedido, updateStatusPedido } = usePedidos()
-  const { produtos } = useProdutos()
+  const { produtos, fetchProdutos } = useProdutos()
+  const { clientes } = useClientes()
   const [filtroStatus, setFiltroStatus] = useState<string>('todos')
   const [showModal, setShowModal] = useState(false)
 
@@ -15,7 +17,6 @@ const Pedidos: React.FC = () => {
   const [formData, setFormData] = useState({
     clienteNome: '',
     clienteTelefone: '',
-    clienteEmail: '',
     enderecoEntrega: {
       rua: '',
       numero: '',
@@ -51,6 +52,11 @@ const Pedidos: React.FC = () => {
   const [selectedTamanho, setSelectedTamanho] = useState('')
   const [selectedSabores, setSelectedSabores] = useState<string[]>([])
 
+  // Estados para busca de clientes
+  const [searchCliente, setSearchCliente] = useState('')
+  const [selectedCliente, setSelectedCliente] = useState<any>(null)
+  const [showClienteDropdown, setShowClienteDropdown] = useState(false)
+
   const statusOptions = [
     { value: 'pendente', label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'confirmado', label: 'Confirmado', color: 'bg-orange-100 text-orange-800' },
@@ -62,9 +68,39 @@ const Pedidos: React.FC = () => {
     { value: 'cancelado', label: 'Cancelado', color: 'bg-red-100 text-red-800' }
   ]
 
+  // Recarregar produtos quando a página for carregada
+  useEffect(() => {
+    fetchProdutos()
+  }, [fetchProdutos])
+
+  // Fechar dropdown quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.cliente-search-container')) {
+        setShowClienteDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   const pedidosFiltrados = filtroStatus === 'todos' 
     ? pedidos 
     : pedidos.filter(pedido => pedido.status === filtroStatus)
+
+  // Filtro de clientes para busca
+  const clientesFiltrados = clientes?.filter(cliente => {
+    if (!searchCliente) return false
+    const searchLower = searchCliente.toLowerCase()
+    return (
+      cliente.nome?.toLowerCase().includes(searchLower) ||
+      cliente.telefone?.includes(searchCliente)
+    )
+  }) || []
 
   const getStatusColor = (status: string) => {
     const statusOption = statusOptions.find(opt => opt.value === status)
@@ -81,6 +117,52 @@ const Pedidos: React.FC = () => {
       await updateStatusPedido(pedidoId, novoStatus)
     } catch (error) {
       console.error('Erro ao alterar status:', error)
+    }
+  }
+
+  // Funções para seleção de clientes
+  const handleSelectCliente = (cliente: any) => {
+    setSelectedCliente(cliente)
+    setSearchCliente(cliente.nome)
+    setShowClienteDropdown(false)
+    
+    // Preencher dados do formulário com os dados do cliente
+    setFormData(prev => ({
+      ...prev,
+      clienteNome: cliente.nome,
+      clienteTelefone: cliente.telefone,
+      enderecoEntrega: cliente.enderecos?.find((end: any) => end.principal) || {
+        rua: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        cep: '',
+        referencia: ''
+      }
+    }))
+  }
+
+  const handleSearchClienteChange = (value: string) => {
+    setSearchCliente(value)
+    setShowClienteDropdown(value.length > 0)
+    if (value.length === 0) {
+      setSelectedCliente(null)
+      // Limpar dados do formulário
+      setFormData(prev => ({
+        ...prev,
+        clienteNome: '',
+        clienteTelefone: '',
+        enderecoEntrega: {
+          rua: '',
+          numero: '',
+          complemento: '',
+          bairro: '',
+          cidade: '',
+          cep: '',
+          referencia: ''
+        }
+      }))
     }
   }
 
@@ -108,7 +190,7 @@ const Pedidos: React.FC = () => {
       // Preparar dados do pedido para impressão
       const orderData = {
         id: pedido._id,
-        data: pedido.criadoEm || new Date(),
+        data: pedido.createdAt || new Date(),
         cliente: pedido.clienteNome || 'Cliente não informado',
         telefone: pedido.clienteTelefone || 'Não informado',
         endereco: pedido.enderecoEntrega ? 
@@ -352,7 +434,6 @@ ${formatarItens(pedido.items)}
       setFormData({
         clienteNome: '',
         clienteTelefone: '',
-        clienteEmail: '',
         enderecoEntrega: {
           rua: '',
           numero: '',
@@ -517,16 +598,16 @@ ${formatarItens(pedido.items)}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600">Cliente</p>
-                          <p className="font-medium text-gray-900">{pedido.clienteNome || 'Cliente não informado'}</p>
+                          <p className="font-medium text-gray-900">{pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Telefone</p>
-                          <p className="font-medium text-gray-900">{pedido.clienteTelefone || 'Telefone não informado'}</p>
+                          <p className="font-medium text-gray-900">{pedido.cliente?.telefone || pedido.clienteTelefone || 'Telefone não informado'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Data do Pedido</p>
                           <p className="font-medium text-gray-900">
-                            {pedido.criadoEm ? new Date(pedido.criadoEm).toLocaleDateString('pt-BR') : 
+                            {pedido.createdAt ? new Date(pedido.createdAt).toLocaleDateString('pt-BR') : 
                              'Data não disponível'}
                           </p>
                         </div>
@@ -644,6 +725,40 @@ ${formatarItens(pedido.items)}
               {/* Dados do Cliente */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Dados do Cliente</h3>
+                
+                {/* Busca de Cliente */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Buscar Cliente Existente
+                  </label>
+                  <div className="relative cliente-search-container">
+                    <input
+                      type="text"
+                      value={searchCliente}
+                      onChange={(e) => handleSearchClienteChange(e.target.value)}
+                      onFocus={() => setShowClienteDropdown(searchCliente.length > 0)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Digite nome, telefone ou email para buscar..."
+                    />
+                    
+                    {/* Dropdown de resultados */}
+                    {showClienteDropdown && clientesFiltrados.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {clientesFiltrados.map((cliente) => (
+                          <div
+                            key={cliente._id}
+                            onClick={() => handleSelectCliente(cliente)}
+                            className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">{cliente.nome}</div>
+                            <div className="text-sm text-gray-600">{cliente.telefone}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -671,6 +786,7 @@ ${formatarItens(pedido.items)}
                       placeholder="(11) 99999-9999"
                     />
                   </div>
+
 
                 </div>
               </div>

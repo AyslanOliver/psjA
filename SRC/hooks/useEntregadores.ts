@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 
-import { lumi } from '../lib/api'
+import { api } from '../lib/api'
 
 interface Entregador {
   _id: string
@@ -31,8 +31,8 @@ interface Entregador {
   // Propriedades adicionais para compatibilidade
   entregasRealizadas: number
   avaliacaoMedia: number
-  criadoEm?: string
-  atualizadoEm?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export const useEntregadores = () => {
@@ -45,11 +45,12 @@ export const useEntregadores = () => {
     console.log('fetchEntregadores called')
     setLoading(true)
     try {
-      const response = await lumi.entities.entregadores.list({
-        sort: { criadoEm: -1 }
+      const response = await api.getEntregadores({
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
       })
       console.log('fetchEntregadores response:', response)
-      setEntregadores(response.list as unknown as Entregador[] || [])
+      setEntregadores(response.entregadores || [])
     } catch (error: unknown) {
       console.error('Erro ao buscar entregadores:', error)
       toast.error('Erro ao carregar entregadores')
@@ -109,12 +110,10 @@ export const useEntregadores = () => {
         cpf: cpfFormatado || undefined,
         entregasRealizadas: 0,
         avaliacaoMedia: 0,
-        criador: 'admin',
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString()
+        criador: 'admin'
       }
       
-      const entregador = await lumi.entities.entregadores.create(novoEntregador) as unknown as Entregador
+      const entregador = await api.createEntregador(novoEntregador)
       setEntregadores(prev => [entregador, ...prev])
       toast.success('Entregador criado com sucesso!')
       return entregador
@@ -127,10 +126,10 @@ export const useEntregadores = () => {
 
   const updateEntregador = async (entregadorId: string, entregadorData: Partial<Entregador>) => {
     try {
-      const entregadorAtualizado = await lumi.entities.entregadores.patch(entregadorId, {
+      const entregadorAtualizado = await api.updateEntregador(entregadorId, {
         ...entregadorData,
         atualizadoEm: new Date().toISOString()
-      }) as unknown as Entregador
+      })
       
       setEntregadores(prev => prev.map(e => e._id === entregadorId ? entregadorAtualizado : e))
       toast.success('Entregador atualizado com sucesso!')
@@ -148,7 +147,7 @@ export const useEntregadores = () => {
         throw new Error('ID do entregador deve ser uma string')
       }
       
-      await lumi.entities.entregadores.delete(entregadorId)
+      await api.deleteEntregador(entregadorId)
       setEntregadores(prev => prev.filter(e => e._id !== entregadorId))
       toast.success('Entregador excluído com sucesso!')
     } catch (error: unknown) {

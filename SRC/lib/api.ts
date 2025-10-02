@@ -1,7 +1,7 @@
 // Configuração da API local
 declare const process: { env: { NODE_ENV?: string } }; const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://delivery-api-xxx.onrender.com/api'  // URL do Render quando em produção
-  : 'http://localhost:3001/api'  // API local
+  : '/api'  // API local via proxy do Vite
 
 class ApiClient {
   private baseUrl: string
@@ -155,66 +155,6 @@ class ApiClient {
 // Instância da API
 export const api = new ApiClient(API_BASE_URL)
 
-// Compatibilidade com o formato do Lumi SDK
-export const lumi = {
-  entities: {
-    produtos: {
-      list: async (options: any = {}) => {
-        const params = options.sort ? { 
-          sortBy: Object.keys(options.sort)[0], 
-          sortOrder: Object.values(options.sort)[0] === -1 ? 'desc' : 'asc',
-          limit: 1000 // Buscar todos os produtos
-        } : { limit: 1000 }
-        const response = await api.getProdutos(params)
-        return { list: response.produtos || [] }
-      },
-      create: async (produto: any) => {
-        return await api.createProduto(produto)
-      },
-      update: async (id: string, produto: any) => {
-        return await api.updateProduto(id, produto)
-      },
-      delete: async (id: string) => {
-        return await api.deleteProduto(id)
-      }
-    },
-    pedidos: {
-      list: async (options: any = {}) => {
-        const response = await api.getPedidos(options.sort ? { sortBy: Object.keys(options.sort)[0], sortOrder: Object.values(options.sort)[0] === -1 ? 'desc' : 'asc' } : {})
-        return { list: response.pedidos || [] }
-      },
-      create: async (pedido: any) => {
-        return await api.createPedido(pedido)
-      },
-      update: async (id: string, pedido: any) => {
-        return await api.updatePedido(id, pedido)
-      }
-    },
-    clientes: {
-      list: async (options: any = {}) => {
-        const response = await api.getClientes(options.sort ? { sortBy: Object.keys(options.sort)[0], sortOrder: Object.values(options.sort)[0] === -1 ? 'desc' : 'asc' } : {})
-        return { list: response.clientes || [] }
-      },
-      create: async (cliente: any) => {
-        return await api.createCliente(cliente)
-      }
-    },
-    entregadores: {
-      list: async (options: any = {}) => {
-        const response = await api.getEntregadores(options.sort ? { sortBy: Object.keys(options.sort)[0], sortOrder: Object.values(options.sort)[0] === -1 ? 'desc' : 'asc' } : {})
-        return { list: response.entregadores || [] }
-      },
-      create: async (entregador: any) => {
-        return await api.createEntregador(entregador)
-      },
-      patch: async (id: string, updates: any) => {
-        return await api.updateEntregador(id, updates)
-      },
-      delete: async (id: string) => {
-        return await api.deleteEntregador(id)
-      }
-    }
-  }
-}
+
 
 export default api

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { lumi, api } from '../lib/api'
+import { api } from '../lib/api'
 
 interface ItemPedido {
   produtoId: string
@@ -49,8 +49,8 @@ interface Pedido {
   entregadorNome?: string
   horarioSaidaEntrega?: string
   horarioEntrega?: string
-  criadoEm: string
-  atualizadoEm: string
+  createdAt: string
+  updatedAt: string
 }
 
 export const usePedidos = () => {
@@ -63,13 +63,16 @@ export const usePedidos = () => {
     console.log('fetchPedidos called with filter:', filtroStatus)
     setLoading(true)
     try {
-      const filter = filtroStatus ? { status: filtroStatus } : {}
-      const response = await lumi.entities.pedidos.list({
-        filter,
-        sort: { criadoEm: -1 }
-      })
+      const params: any = {
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      }
+      if (filtroStatus) {
+        params.status = filtroStatus
+      }
+      const response = await api.getPedidos(params)
       console.log('fetchPedidos response:', response)
-      setPedidos(response.list as unknown as Pedido[] || [])
+      setPedidos(response.pedidos || [])
     } catch (error: unknown) {
       console.error('Erro ao buscar pedidos:', error)
       toast.error('Erro ao carregar pedidos')
@@ -78,19 +81,17 @@ export const usePedidos = () => {
     }
   }, [])
 
-  const createPedido = async (pedidoData: Omit<Pedido, '_id' | 'numeroPedido' | 'criadoEm' | 'atualizadoEm'>) => {
+  const createPedido = async (pedidoData: Omit<Pedido, '_id' | 'numeroPedido' | 'createdAt' | 'updatedAt'>) => {
     try {
       const numeroPedido = `PED-${Date.now().toString().slice(-6)}`
       
       const novoPedido = {
         ...pedidoData,
         numeroPedido,
-        criador: 'admin',
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString()
+        criador: 'admin'
       }
       
-      const pedido = await lumi.entities.pedidos.create(novoPedido) as unknown as Pedido
+      const pedido = await api.createPedido(novoPedido)
       setPedidos(prev => [pedido, ...prev])
       toast.success(`Pedido ${numeroPedido} criado com sucesso!`)
       return pedido
@@ -103,10 +104,10 @@ export const usePedidos = () => {
 
   const updatePedido = async (pedidoId: string, pedidoData: Partial<Pedido>) => {
     try {
-      const pedidoAtualizado = await lumi.entities.pedidos.update(pedidoId, {
+      const pedidoAtualizado = await api.updatePedido(pedidoId, {
         ...pedidoData,
         atualizadoEm: new Date().toISOString()
-      }) as unknown as Pedido
+      })
       
       setPedidos(prev => prev.map(p => p._id === pedidoId ? pedidoAtualizado : p))
       toast.success('Pedido atualizado com sucesso!')
@@ -126,7 +127,7 @@ export const usePedidos = () => {
       
       const updatedData: Partial<Pedido> = {
         status: novoStatus,
-        atualizadoEm: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         ...dadosAdicionais
       }
       
@@ -136,7 +137,7 @@ export const usePedidos = () => {
         updatedData.horarioEntrega = new Date().toISOString()
       }
       
-      const pedidoAtualizado = await api.updatePedidoStatus(pedidoId, novoStatus) as unknown as Pedido
+      const pedidoAtualizado = await api.updatePedidoStatus(pedidoId, novoStatus)
       setPedidos(prev => prev.map(p => p._id === pedidoId ? pedidoAtualizado : p))
       
       const statusTexto = {
@@ -166,7 +167,7 @@ export const usePedidos = () => {
       }
       
       // fallback: remove does not exist, so we patch with a "deleted" flag
-      await lumi.entities.pedidos.update(pedidoId, { deleted: true, atualizadoEm: new Date().toISOString() })
+      await api.updatePedido(pedidoId, { deleted: true, atualizadoEm: new Date().toISOString() })
       setPedidos(prev => prev.filter(p => p._id !== pedidoId))
       toast.success('Pedido excluído com sucesso!')
     } catch (error: unknown) {
@@ -182,7 +183,7 @@ export const usePedidos = () => {
 
   const calcularEstatisticas = useCallback(() => {
     const hoje = new Date().toISOString().split('T')[0]
-    const pedidosHoje = pedidos.filter(p => p.criadoEm.startsWith(hoje))
+    const pedidosHoje = pedidos.filter(p => p.createdAt?.startsWith(hoje))
     
     return {
       totalPedidos: pedidos.length,

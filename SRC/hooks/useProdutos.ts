@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { lumi } from '../lib/api'
+import { api } from '../lib/api'
 
 interface Produto {
   _id: string
@@ -31,10 +31,12 @@ export const useProdutos = () => {
   const fetchProdutos = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await lumi.entities.produtos.list({
-        sort: { criadoEm: -1 }
+      const response = await api.getProdutos({
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+        limit: 1000
       })
-      setProdutos(response.list as unknown as Produto[] || [])
+      setProdutos(response.produtos || [])
     } catch (error: unknown) {
       console.error('Erro ao buscar produtos:', error)
       toast.error('Erro ao carregar produtos')
@@ -47,12 +49,10 @@ export const useProdutos = () => {
     try {
       const novoProduto = {
         ...produtoData,
-        criador: 'admin',
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString()
+        criador: 'admin'
       }
       
-      const produto = await lumi.entities.produtos.create(novoProduto) as unknown as Produto
+      const produto = await api.createProduto(novoProduto)
       setProdutos(prev => [produto, ...prev])
       toast.success('Produto criado com sucesso!')
       return produto
@@ -65,10 +65,10 @@ export const useProdutos = () => {
 
   const updateProduto = async (produtoId: string, updates: Partial<Produto>) => {
     try {
-      const produtoAtualizado = await lumi.entities.produtos.update(produtoId, {
+      const produtoAtualizado = await api.updateProduto(produtoId, {
         ...updates,
         atualizadoEm: new Date().toISOString()
-      }) as unknown as Produto
+      })
       
       setProdutos(prev => prev.map(p => p._id === produtoId ? produtoAtualizado : p))
       toast.success('Produto atualizado com sucesso!')
@@ -86,7 +86,7 @@ export const useProdutos = () => {
         throw new Error('ID do produto deve ser uma string')
       }
       
-      await lumi.entities.produtos.delete(produtoId)
+      await api.deleteProduto(produtoId)
       setProdutos(prev => prev.filter(p => p._id !== produtoId))
       toast.success('Produto excluído com sucesso!')
     } catch (error: unknown) {

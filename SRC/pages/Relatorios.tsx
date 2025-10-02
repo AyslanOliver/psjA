@@ -48,7 +48,7 @@ const Relatorios: React.FC = () => {
 
   // Métricas calculadas
   const metricas = useMemo(() => {
-    const pedidosFiltrados = pedidos.filter(p => filtrarPorPeriodo(p.criadoEm))
+    const pedidosFiltrados = pedidos.filter(p => filtrarPorPeriodo(p.createdAt))
     const pedidosEntregues = pedidosFiltrados.filter(p => p.status === 'entregue')
     
     const faturamentoTotal = pedidosEntregues.reduce((acc, p) => acc + p.total, 0)
@@ -72,7 +72,7 @@ const Relatorios: React.FC = () => {
 
     // Horários de pico
     const pedidosPorHora = pedidosFiltrados.reduce((acc: any, pedido) => {
-      const hora = new Date(pedido.criadoEm).getHours()
+      const hora = new Date(pedido.createdAt).getHours()
       acc[hora] = (acc[hora] || 0) + 1
       return acc
     }, {})

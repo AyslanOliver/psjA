@@ -19,20 +19,8 @@ const enderecoSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  cidade: {
-    type: String,
-    required: true
-  },
-  cep: {
-    type: String,
-    required: true,
-    validate: {
-      validator: function(v) {
-        return /^\d{5}-?\d{3}$/.test(v);
-      },
-      message: 'CEP inválido'
-    }
-  },
+  cidade: String,
+  cep: String,
   referencia: String,
   principal: {
     type: Boolean,
@@ -56,23 +44,7 @@ const clienteSchema = new mongoose.Schema({
       message: 'Telefone inválido'
     }
   },
-  email: {
-    type: String,
-    validate: {
-      validator: validator.isEmail,
-      message: 'Email inválido'
-    }
-  },
-  cpf: {
-    type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
-      },
-      message: 'CPF inválido'
-    }
-  },
-  dataNascimento: Date,
+
   enderecos: [enderecoSchema],
   ativo: {
     type: Boolean,

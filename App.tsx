@@ -8,6 +8,7 @@ import LoginPage from './SRC/components/LoginPage'
 import Dashboard from './SRC/pages/Dashboard'
 import Produtos from './SRC/pages/Produtos'
 import Pedidos from './SRC/pages/Pedidos'
+import Clientes from './SRC/pages/Clientes'
 import Entregadores from './SRC/pages/Entregadores'
 import Entregas from './SRC/pages/Entregas'
 import Relatorios from './SRC/pages/Relatorios'
@@ -67,6 +68,7 @@ function AppContent() {
             <Route index element={<Dashboard />} />
             <Route path="produtos" element={<Produtos />} />
             <Route path="pedidos" element={<Pedidos />} />
+            <Route path="clientes" element={<Clientes />} />
             <Route path="entregadores" element={<Entregadores />} />
             <Route path="entregas" element={<Entregas />} />
             <Route path="relatorios" element={<Relatorios />} />

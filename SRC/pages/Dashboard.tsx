@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
   // Pedidos recentes (últimos 5)
   const pedidosRecentes = pedidos
     .slice()
-    .sort((a: any, b: any) => new Date(b.criadoEm || b.dataHora || b.atualizadoEm || 0).getTime() - new Date(a.criadoEm || a.dataHora || a.atualizadoEm || 0).getTime())
+    .sort((a: any, b: any) => new Date(b.createdAt || b.dataHora || b.updatedAt || 0).getTime() - new Date(a.createdAt || a.dataHora || a.updatedAt || 0).getTime())
     .slice(0, 5)
 
   const getStatusColor = (status: string) => {
@@ -150,7 +150,7 @@ const Dashboard: React.FC = () => {
                     <p className="font-medium text-gray-900">Pedido #{pedido.numeroPedido || (pedido._id ? `PED-${String(pedido._id).slice(-6)}` : '')}</p>
                     <p className="text-sm text-gray-600">{pedido.clienteNome || pedido.cliente?.nome || 'Cliente não informado'}</p>
                     <p className="text-sm text-gray-500">
-                      {new Date(pedido.criadoEm || pedido.dataHora || Date.now()).toLocaleDateString('pt-BR')}
+                      {new Date(pedido.createdAt || pedido.dataHora || Date.now()).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <div className="text-right">

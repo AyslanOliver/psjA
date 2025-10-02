@@ -79,12 +79,12 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Atualizar entregador
-router.put('/:id', async (req, res) => {
+// Atualizar entregador (PATCH - atualização parcial)
+router.patch('/:id', async (req, res) => {
   try {
     const entregador = await Entregador.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { $set: req.body },
       { new: true, runValidators: true }
     );
     
@@ -259,6 +259,38 @@ router.get('/:id/estatisticas', async (req, res) => {
       avaliacaoMedia: entregador.avaliacaoMedia
     });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Sincronizar contadores de entregas (rota administrativa)
+router.post('/sincronizar-entregas', async (req, res) => {
+  try {
+    const entregadores = await Entregador.find({});
+    let atualizados = 0;
+
+    for (const entregador of entregadores) {
+      // Conta o total de entregas realizadas por este entregador
+      const totalEntregas = await Pedido.countDocuments({
+        entregador: entregador._id,
+        status: 'entregue'
+      });
+
+      // Atualiza o campo totalEntregas no entregador
+      await Entregador.findByIdAndUpdate(entregador._id, {
+        totalEntregas: totalEntregas
+      });
+
+      atualizados++;
+      console.log(`Entregador ${entregador.nome}: ${totalEntregas} entregas`);
+    }
+
+    res.json({
+      message: `Contadores de entregas sincronizados com sucesso`,
+      entregadoresAtualizados: atualizados
+    });
+  } catch (error) {
+    console.error('Erro ao sincronizar contadores:', error);
     res.status(500).json({ message: error.message });
   }
 });
