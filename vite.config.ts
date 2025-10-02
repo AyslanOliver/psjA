@@ -27,6 +27,21 @@ export default defineConfig(({ mode }) => {
       'process.env.NODE_ENV': '"development"',
       '__DEV__': 'true',
     }
+  } else if (mode === 'cordova') {
+    build = {
+      outDir: './pizzaria-app/www',
+      emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: undefined,
+        },
+      },
+    }
+
+    define = {
+      'process.env.NODE_ENV': '"production"',
+      '__DEV__': 'false',
+    }
   }
 
   return {

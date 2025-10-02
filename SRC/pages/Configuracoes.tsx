@@ -12,7 +12,8 @@ import {
   Bluetooth,
   Search
 } from 'lucide-react'
-import { bluetoothPrinter, BluetoothDevice } from '../utils/bluetoothPrinter'
+import { bluetoothManager } from '../utils/bluetoothManager'
+import type { BluetoothDevice } from '../utils/bluetoothPrinter'
 import { api } from '../lib/api'
 
 interface ConfiguracaoSistema {
@@ -244,7 +245,7 @@ const Configuracoes: React.FC = () => {
 
   // Funções para gerenciamento da impressora Bluetooth
   useEffect(() => {
-    setBluetoothSupported(bluetoothPrinter.isBluetoothAvailable())
+    setBluetoothSupported(bluetoothManager.isBluetoothAvailable())
     
     // Carregar configurações do backend ao montar
     ;(async () => {
@@ -307,7 +308,7 @@ const Configuracoes: React.FC = () => {
 
         // Definir dispositivo lembrado para reconexão automática
         if (data.impressora?.bluetoothDeviceId) {
-          bluetoothPrinter.setRememberedDevice(data.impressora.bluetoothDeviceId)
+          bluetoothManager.setRememberedDevice(data.impressora.bluetoothDeviceId)
         }
       } catch (err) {
         console.error('Erro ao carregar configurações:', err)
@@ -315,7 +316,7 @@ const Configuracoes: React.FC = () => {
     })()
 
     // Verificar se já existe uma conexão ativa
-    const deviceInfo = bluetoothPrinter.getDeviceInfo()
+    const deviceInfo = bluetoothManager.getDeviceInfo()
     if (deviceInfo && deviceInfo.connected) {
       setConnectedDevice(deviceInfo)
     }
@@ -329,7 +330,7 @@ const Configuracoes: React.FC = () => {
 
     setIsScanning(true)
     try {
-      const devices = await bluetoothPrinter.scanDevices()
+      const devices = await bluetoothManager.scanDevices()
       setBluetoothDevices(devices)
     } catch (error) {
       console.error('Erro ao buscar dispositivos:', error)
@@ -342,9 +343,9 @@ const Configuracoes: React.FC = () => {
   const handleConnectDevice = async () => {
     setIsConnecting(true)
     try {
-      const connected = await bluetoothPrinter.connect()
+      const connected = await bluetoothManager.connect()
       if (connected) {
-        const deviceInfo = bluetoothPrinter.getDeviceInfo()
+        const deviceInfo = bluetoothManager.getDeviceInfo()
         setConnectedDevice(deviceInfo)
         updateConfig('impressora', 'tipo', 'bluetooth')
         // Persistir dispositivo no backend para reconexão futura
@@ -356,7 +357,7 @@ const Configuracoes: React.FC = () => {
             reconectarAutomaticamente: true
           })
           // Atualizar serviço com o deviceId lembrado
-          bluetoothPrinter.setRememberedDevice(deviceInfo.id)
+          bluetoothManager.setRememberedDevice(deviceInfo.id)
         }
         alert('Impressora conectada com sucesso!')
       } else {
@@ -372,7 +373,7 @@ const Configuracoes: React.FC = () => {
 
   const handleDisconnectDevice = async () => {
     try {
-      await bluetoothPrinter.disconnect()
+      await bluetoothManager.disconnect()
       setConnectedDevice(null)
       alert('Impressora desconectada')
     } catch (error) {
@@ -388,7 +389,7 @@ const Configuracoes: React.FC = () => {
 
     updateConfig('impressora', 'testeImpressao', true)
     try {
-      await bluetoothPrinter.printTest()
+      await bluetoothManager.printTest()
       alert('Teste de impressão enviado com sucesso!')
     } catch (error) {
       console.error('Erro no teste de impressão:', error)
@@ -1042,7 +1043,7 @@ const Configuracoes: React.FC = () => {
                           }
                           updateConfig('impressora', 'testeImpressao', true);
                           try {
-                            await bluetoothPrinter.printKitchenTest();
+                            await bluetoothManager.printKitchenTest();
                             alert('Teste da via da cozinha enviado com sucesso!');
                           } catch (error) {
                             console.error('Erro no teste da via da cozinha:', error);

@@ -1,7 +1,9 @@
-// Configuração da API local
-declare const process: { env: { NODE_ENV?: string } }; const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://delivery-api-xxx.onrender.com/api'  // URL do Render quando em produção
-  : '/api'  // API local via proxy do Vite
+// Configuração da API
+declare const process: { env: { NODE_ENV?: string } };
+
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://delivery-api.onrender.com/api'  // URL do Render quando em produção
+  : 'http://localhost:3001/api'  // API local para desenvolvimento
 
 class ApiClient {
   private baseUrl: string

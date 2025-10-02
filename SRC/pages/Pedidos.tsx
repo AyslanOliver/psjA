@@ -5,7 +5,7 @@ import { usePedidos } from '../hooks/usePedidos'
 import { useProdutos } from '../hooks/useProdutos'
 import { useClientes } from '../hooks/useClientes'
 import { getTamanhosDisponiveis, getPizzaPrice, SABORES_DISPONIVEIS, isSaborEspecial } from '../config/pizzaPricing'
-import { bluetoothPrinter } from '../utils/bluetoothPrinter'
+import { bluetoothManager } from '../utils/bluetoothManager'
 
 const Pedidos: React.FC = () => {
   const { pedidos, loading, createPedido, updateStatusPedido, deletePedido } = usePedidos()
@@ -171,16 +171,16 @@ const Pedidos: React.FC = () => {
   const handlePrintKitchen = async (pedido: any) => {
     try {
       // Verificar se Bluetooth está disponível
-      if (!bluetoothPrinter.isBluetoothAvailable()) {
+      if (!bluetoothManager.isBluetoothAvailable()) {
         alert('Bluetooth não está disponível neste dispositivo')
         return
       }
 
       // Verificar se já está conectado; tentar reconexão automática antes de solicitar pareamento
-      if (!bluetoothPrinter.isConnected()) {
-        const reconnected = await bluetoothPrinter.tryReconnect().catch(() => false)
+      if (!bluetoothManager.isConnected()) {
+        const reconnected = await bluetoothManager.tryReconnect().catch(() => false)
         if (!reconnected) {
-          const connected = await bluetoothPrinter.connect()
+          const connected = await bluetoothManager.connect()
           if (!connected) {
             alert('Falha ao conectar com a impressora Bluetooth')
             return
@@ -226,7 +226,7 @@ const Pedidos: React.FC = () => {
       }
 
       // Imprimir via cozinha usando a impressora Bluetooth
-      await bluetoothPrinter.printKitchenOrder(orderData)
+      await bluetoothManager.printKitchenOrder(orderData)
       
       alert('Via da cozinha impressa com sucesso!')
 
