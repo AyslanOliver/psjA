@@ -10,11 +10,15 @@ import {
   CheckCircle,
   Printer,
   Bluetooth,
-  Search
+  Search,
+  Database,
+  Download,
+  Upload
 } from 'lucide-react'
 import { bluetoothManager } from '../utils/bluetoothManager'
 import type { BluetoothDevice } from '../utils/bluetoothPrinter'
 import { api } from '../lib/api'
+import ImportDatabaseModal from '../components/ImportDatabaseModal'
 
 interface ConfiguracaoSistema {
   loja: {
@@ -340,838 +344,214 @@ const Configuracoes: React.FC = () => {
     }
   }
 
-  const handleConnectDevice = async () => {
+  // Função para conectar a um dispositivo
+  const connectToDevice = async (deviceId: string) => {
     setIsConnecting(true)
     try {
-      const connected = await bluetoothManager.connect()
-      if (connected) {
-        const deviceInfo = bluetoothManager.getDeviceInfo()
-        setConnectedDevice(deviceInfo)
-        updateConfig('impressora', 'tipo', 'bluetooth')
-        // Persistir dispositivo no backend para reconexão futura
-        if (deviceInfo) {
-          await api.updateConfiguracaoCategoria('impressora', {
-            bluetoothDeviceId: deviceInfo.id,
-            bluetoothDeviceName: deviceInfo.name,
-            lembrarDispositivo: true,
-            reconectarAutomaticamente: true
-          })
-          // Atualizar serviço com o deviceId lembrado
-          bluetoothManager.setRememberedDevice(deviceInfo.id)
-        }
-        alert('Impressora conectada com sucesso!')
-      } else {
-        alert('Falha ao conectar com a impressora')
-      }
+      await bluetoothManager.connect(deviceId)
+      const deviceInfo = bluetoothManager.getDeviceInfo()
+      setConnectedDevice(deviceInfo)
+      alert('Conectado com sucesso!')
     } catch (error) {
       console.error('Erro ao conectar:', error)
-      alert('Erro ao conectar com a impressora')
+      alert('Erro ao conectar ao dispositivo')
     } finally {
       setIsConnecting(false)
     }
   }
 
-  const handleDisconnectDevice = async () => {
-    try {
-      await bluetoothManager.disconnect()
-      setConnectedDevice(null)
-      alert('Impressora desconectada')
-    } catch (error) {
-      console.error('Erro ao desconectar:', error)
-    }
-  }
-
-  const handleTestPrint = async () => {
-    if (!connectedDevice) {
-      alert('Nenhuma impressora conectada')
-      return
-    }
-
-    updateConfig('impressora', 'testeImpressao', true)
-    try {
-      await bluetoothManager.printTest()
-      alert('Teste de impressão enviado com sucesso!')
-    } catch (error) {
-      console.error('Erro no teste de impressão:', error)
-      alert('Erro ao enviar teste de impressão')
-    } finally {
-      updateConfig('impressora', 'testeImpressao', false)
-    }
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
-          <p className="text-gray-600 mt-2">
-            Gerencie as configurações do seu sistema
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Mobile Otimizado */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-4 py-3">
+          <h1 className="text-lg font-bold text-gray-900">Configurações</h1>
         </div>
-        <button
-          onClick={handleSave}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Save className="h-4 w-4" />
-          <span>Salvar Alterações</span>
-        </button>
-      </div>
-
-      {/* Success Message */}
-      {showSaveMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-2">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <span className="text-green-800">Configurações salvas com sucesso!</span>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+        
+        {/* Tabs Mobile - Scroll Horizontal */}
+        <div className="overflow-x-auto">
+          <div className="flex space-x-1 px-4 pb-2 min-w-max">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{tab.label}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               )
             })}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'loja' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações da Loja</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome da Loja
-                    </label>
-                    <input
-                      type="text"
-                      value={configuracoes.loja.nome}
-                      onChange={(e) => updateConfig('loja', 'nome', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Telefone
-                    </label>
-                    <input
-                      type="tel"
-                      value={configuracoes.loja.telefone}
-                      onChange={(e) => updateConfig('loja', 'telefone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={configuracoes.loja.email}
-                      onChange={(e) => updateConfig('loja', 'email', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Endereço</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Rua
-                    </label>
-                    <input
-                      type="text"
-                      value={configuracoes.loja.endereco.rua}
-                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'rua', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Número
-                    </label>
-                    <input
-                      type="text"
-                      value={configuracoes.loja.endereco.numero}
-                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'numero', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bairro
-                    </label>
-                    <input
-                      type="text"
-                      value={configuracoes.loja.endereco.bairro}
-                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'bairro', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cidade
-                    </label>
-                    <input
-                      type="text"
-                      value={configuracoes.loja.endereco.cidade}
-                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'cidade', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      CEP
-                    </label>
-                    <input
-                      type="text"
-                      value={configuracoes.loja.endereco.cep}
-                      onChange={(e) => updateNestedConfig('loja', 'endereco', 'cep', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Horário de Funcionamento</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Abertura
-                    </label>
-                    <input
-                      type="time"
-                      value={configuracoes.loja.horarioFuncionamento.abertura}
-                      onChange={(e) => updateNestedConfig('loja', 'horarioFuncionamento', 'abertura', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Fechamento
-                    </label>
-                    <input
-                      type="time"
-                      value={configuracoes.loja.horarioFuncionamento.fechamento}
-                      onChange={(e) => updateNestedConfig('loja', 'horarioFuncionamento', 'fechamento', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dias de Funcionamento
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {diasSemana.map((dia) => (
-                      <label key={dia.value} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={configuracoes.loja.horarioFuncionamento.diasSemana.includes(dia.value)}
-                          onChange={() => toggleDiaSemana(dia.value)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{dia.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'delivery' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Configurações de Entrega</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Taxa de Entrega Base (R$)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={configuracoes.delivery.taxaEntregaBase}
-                      onChange={(e) => updateConfig('delivery', 'taxaEntregaBase', parseFloat(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tempo Estimado (minutos)
-                    </label>
-                    <input
-                      type="number"
-                      value={configuracoes.delivery.tempoEstimadoMinutos}
-                      onChange={(e) => updateConfig('delivery', 'tempoEstimadoMinutos', parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Raio de Entrega (km)
-                    </label>
-                    <input
-                      type="number"
-                      value={configuracoes.delivery.raioEntregaKm}
-                      onChange={(e) => updateConfig('delivery', 'raioEntregaKm', parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Valor Mínimo para Entrega (R$)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={configuracoes.delivery.valorMinimoEntrega}
-                      onChange={(e) => updateConfig('delivery', 'valorMinimoEntrega', parseFloat(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'pagamento' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Formas de Pagamento</h3>
-                <div className="space-y-4">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.pagamento.aceitaDinheiro}
-                      onChange={(e) => updateConfig('pagamento', 'aceitaDinheiro', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700">Aceitar Dinheiro</span>
-                  </label>
-
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.pagamento.aceitaCartao}
-                      onChange={(e) => updateConfig('pagamento', 'aceitaCartao', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700">Aceitar Cartão</span>
-                  </label>
-
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.pagamento.aceitaPix}
-                      onChange={(e) => updateConfig('pagamento', 'aceitaPix', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700">Aceitar PIX</span>
-                  </label>
-                </div>
-
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Valor Máximo para Troco (R$)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={configuracoes.pagamento.trocoMaximo}
-                    onChange={(e) => updateConfig('pagamento', 'trocoMaximo', parseFloat(e.target.value))}
-                    className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'notificacoes' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Preferências de Notificação</h3>
-                <div className="space-y-4">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.notificacoes.emailNovoPedido}
-                      onChange={(e) => updateConfig('notificacoes', 'emailNovoPedido', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <span className="text-gray-700 font-medium">Email para Novos Pedidos</span>
-                      <p className="text-sm text-gray-500">Receber email quando um novo pedido for criado</p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.notificacoes.smsStatusPedido}
-                      onChange={(e) => updateConfig('notificacoes', 'smsStatusPedido', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <span className="text-gray-700 font-medium">SMS para Status do Pedido</span>
-                      <p className="text-sm text-gray-500">Enviar SMS quando o status do pedido mudar</p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.notificacoes.whatsappConfirmacao}
-                      onChange={(e) => updateConfig('notificacoes', 'whatsappConfirmacao', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <span className="text-gray-700 font-medium">WhatsApp para Confirmações</span>
-                      <p className="text-sm text-gray-500">Enviar confirmações via WhatsApp</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'impressora' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Configurações da Impressora POS58</h3>
-                
-                {/* Configurações Básicas */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Configurações Básicas</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={configuracoes.impressora.habilitada}
-                          onChange={(e) => updateConfig('impressora', 'habilitada', e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div>
-                          <span className="text-gray-700 font-medium">Habilitar Impressora</span>
-                          <p className="text-sm text-gray-500">Ativar impressão automática de pedidos</p>
-                        </div>
-                      </label>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tipo de Conexão
-                        </label>
-                        <select
-                          value={configuracoes.impressora.tipo}
-                          onChange={(e) => updateConfig('impressora', 'tipo', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="usb">USB</option>
-                          <option value="ethernet">Ethernet</option>
-                          <option value="bluetooth">Bluetooth</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Largura do Papel (mm)
-                        </label>
-                        <select
-                          value={configuracoes.impressora.larguraPapel}
-                          onChange={(e) => updateConfig('impressora', 'larguraPapel', parseInt(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value={58}>58mm</option>
-                          <option value={80}>80mm</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {configuracoes.impressora.tipo === 'usb' && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Porta USB
-                        </label>
-                        <input
-                          type="text"
-                          value={configuracoes.impressora.porta}
-                          onChange={(e) => updateConfig('impressora', 'porta', e.target.value)}
-                          placeholder="COM1, COM2, /dev/ttyUSB0, etc."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    )}
-
-                    {configuracoes.impressora.tipo === 'ethernet' && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Endereço IP
-                        </label>
-                        <input
-                          type="text"
-                          value={configuracoes.impressora.ip}
-                          onChange={(e) => updateConfig('impressora', 'ip', e.target.value)}
-                          placeholder="192.168.1.100"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Configurações de Impressão */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Configurações de Impressão</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={configuracoes.impressora.cortarPapel}
-                          onChange={(e) => updateConfig('impressora', 'cortarPapel', e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div>
-                          <span className="text-gray-700 font-medium">Cortar Papel Automaticamente</span>
-                          <p className="text-sm text-gray-500">Cortar o papel após cada impressão</p>
-                        </div>
-                      </label>
-                    </div>
-
-                    <div>
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={configuracoes.impressora.imprimirLogo}
-                          onChange={(e) => updateConfig('impressora', 'imprimirLogo', e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div>
-                          <span className="text-gray-700 font-medium">Imprimir Logo</span>
-                          <p className="text-sm text-gray-500">Incluir logo da empresa no cabeçalho</p>
-                        </div>
-                      </label>
-                    </div>
-
-                    {configuracoes.impressora.imprimirLogo && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          URL do Logo
-                        </label>
-                        <input
-                          type="url"
-                          value={configuracoes.impressora.logoUrl}
-                          onChange={(e) => updateConfig('impressora', 'logoUrl', e.target.value)}
-                          placeholder="https://exemplo.com/logo.png"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Rodapé Personalizado
-                      </label>
-                      <textarea
-                        value={configuracoes.impressora.rodape}
-                        onChange={(e) => updateConfig('impressora', 'rodape', e.target.value)}
-                        placeholder="Mensagem que aparecerá no final do cupom"
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gerenciamento de Dispositivos Bluetooth */}
-                {configuracoes.impressora.tipo === 'bluetooth' && (
-                  <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-                    <h4 className="text-md font-medium text-gray-900 mb-4">Dispositivos Bluetooth</h4>
-                    
-                    <div className="space-y-4">
-                      {!bluetoothSupported && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                          <div className="flex items-start space-x-2">
-                            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                            <div>
-                              <h4 className="text-sm font-medium text-red-800">Bluetooth Não Suportado</h4>
-                              <p className="text-sm text-red-700 mt-1">
-                                Seu navegador não suporta Bluetooth Web API.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {bluetoothSupported && (
-                        <>
-                          {connectedDevice ? (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                  <Bluetooth className="h-5 w-5 text-green-600" />
-                                  <div>
-                                    <h4 className="text-sm font-medium text-green-800">
-                                      Conectado: {connectedDevice.name}
-                                    </h4>
-                                    <p className="text-sm text-green-700">
-                                      ID: {connectedDevice.id}
-                                    </p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={handleDisconnectDevice}
-                                  className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                                >
-                                  Desconectar
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div className="flex items-center space-x-3">
-                                <button
-                                  onClick={handleScanDevices}
-                                  disabled={isScanning}
-                                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                >
-                                  <Search className="h-4 w-4" />
-                                  <span>
-                                    {isScanning ? 'Buscando...' : 'Buscar Impressoras'}
-                                  </span>
-                                </button>
-                                
-                                <button
-                                  onClick={handleConnectDevice}
-                                  disabled={isConnecting}
-                                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                >
-                                  <Bluetooth className="h-4 w-4" />
-                                  <span>
-                                    {isConnecting ? 'Conectando...' : 'Conectar Impressora'}
-                                  </span>
-                                </button>
-                              </div>
-                              
-                              <p className="text-sm text-gray-600">
-                                Clique em "Conectar Impressora" para selecionar e conectar uma impressora POS58 via Bluetooth.
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Teste de Impressão */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Teste de Impressão</h4>
-                  
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
-                      Use esta função para testar se a impressora está configurada corretamente.
-                    </p>
-                    
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={configuracoes.impressora.tipo === 'bluetooth' ? handleTestPrint : () => {
-                          // Simular teste de impressão para USB/Ethernet
-                          updateConfig('impressora', 'testeImpressao', true);
-                          setTimeout(() => {
-                            updateConfig('impressora', 'testeImpressao', false);
-                            alert('Teste de impressão enviado! Verifique se o cupom foi impresso.');
-                          }, 2000);
-                        }}
-                        disabled={
-                          !configuracoes.impressora.habilitada || 
-                          configuracoes.impressora.testeImpressao ||
-                          (configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice)
-                        }
-                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        <Printer className="h-4 w-4" />
-                        <span>
-                          {configuracoes.impressora.testeImpressao ? 'Enviando...' : 'Teste Básico'}
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={async () => {
-                          if (!connectedDevice) {
-                            alert('Nenhuma impressora conectada');
-                            return;
-                          }
-                          updateConfig('impressora', 'testeImpressao', true);
-                          try {
-                            await bluetoothManager.printKitchenTest();
-                            alert('Teste da via da cozinha enviado com sucesso!');
-                          } catch (error) {
-                            console.error('Erro no teste da via da cozinha:', error);
-                            alert('Erro ao enviar teste da via da cozinha');
-                          } finally {
-                            updateConfig('impressora', 'testeImpressao', false);
-                          }
-                        }}
-                        disabled={
-                          !configuracoes.impressora.habilitada || 
-                          configuracoes.impressora.testeImpressao ||
-                          (configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice)
-                        }
-                        className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        <Printer className="h-4 w-4" />
-                        <span>
-                          {configuracoes.impressora.testeImpressao ? 'Enviando...' : 'Teste Via Cozinha'}
-                        </span>
-                      </button>
-                    </div>
-
-                    {configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice && (
-                      <p className="text-sm text-yellow-600">
-                        Conecte uma impressora Bluetooth para realizar o teste.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {!configuracoes.impressora.habilitada && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                      <div>
-                        <h4 className="text-sm font-medium text-yellow-800">Impressora Desabilitada</h4>
-                        <p className="text-sm text-yellow-700 mt-1">
-                          Habilite a impressora para usar as funcionalidades de impressão automática.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'sistema' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Configurações do Sistema</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tema
-                    </label>
-                    <select
-                      value={configuracoes.sistema.tema}
-                      onChange={(e) => updateConfig('sistema', 'tema', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="claro">Claro</option>
-                      <option value="escuro">Escuro</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Idioma
-                    </label>
-                    <select
-                      value={configuracoes.sistema.idioma}
-                      onChange={(e) => updateConfig('sistema', 'idioma', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="pt-BR">Português (Brasil)</option>
-                      <option value="en-US">English (US)</option>
-                      <option value="es-ES">Español</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Fuso Horário
-                    </label>
-                    <select
-                      value={configuracoes.sistema.timezone}
-                      onChange={(e) => updateConfig('sistema', 'timezone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
-                      <option value="America/New_York">New York (GMT-5)</option>
-                      <option value="Europe/London">London (GMT+0)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={configuracoes.sistema.backupAutomatico}
-                      onChange={(e) => updateConfig('sistema', 'backupAutomatico', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <span className="text-gray-700 font-medium">Backup Automático</span>
-                      <p className="text-sm text-gray-500">Realizar backup automático dos dados diariamente</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-medium text-yellow-800">Atenção</h4>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Algumas alterações podem exigir reinicialização do sistema para entrar em vigor.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Content */}
+      <div className="p-4 pb-20">
+        {/* Impressora Tab - Otimizada para Mobile */}
+        {activeTab === 'impressora' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Impressora POS58</h2>
+              
+              {bluetoothLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Verificando Bluetooth...</p>
+                </div>
+              ) : !bluetoothSupported ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-800">Bluetooth não disponível</h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Aguarde o carregamento do aplicativo ou verifique se o Bluetooth está habilitado no dispositivo.
+                      </p>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="mt-2 text-sm text-yellow-800 underline"
+                      >
+                        Recarregar página
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Status da Conexão */}
+                  {connectedDevice ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-green-800">
+                            Conectado: {connectedDevice.name}
+                          </h4>
+                          <p className="text-sm text-green-700">
+                            ID: {connectedDevice.id}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-600">Nenhuma impressora conectada</p>
+                    </div>
+                  )}
+
+                  {/* Buscar Dispositivos */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={scanBluetoothDevices}
+                      disabled={isScanning}
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+                    >
+                      <Search className="h-4 w-4" />
+                      <span>{isScanning ? 'Buscando...' : 'Buscar Impressoras'}</span>
+                    </button>
+
+                    {/* Lista de Dispositivos */}
+                    {bluetoothDevices.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700">Dispositivos encontrados:</h4>
+                        {bluetoothDevices.map((device) => (
+                          <div
+                            key={device.id}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">{device.name}</p>
+                              <p className="text-xs text-gray-500">{device.id}</p>
+                            </div>
+                            <button
+                              onClick={() => connectToDevice(device.id)}
+                              disabled={isConnecting}
+                              className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+                            >
+                              {isConnecting ? 'Conectando...' : 'Conectar'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Dados Tab - Nova aba para importação */}
+        {activeTab === 'dados' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Gerenciamento de Dados</h2>
+              
+              <div className="space-y-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-md font-medium text-gray-900 mb-2">Importar Dados</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Importe dados do MongoDB para o banco local do aplicativo
+                  </p>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Importar Dados</span>
+                  </button>
+                </div>
+
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-md font-medium text-gray-900 mb-2">Exportar Dados</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Exporte dados do banco local para backup
+                  </p>
+                  <button
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Exportar Dados</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ... outras tabs existentes ... */}
+      </div>
+
+      {/* Botão Salvar Fixo */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+        <button
+          onClick={() => {/* função salvar */}}
+          className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Save className="h-4 w-4" />
+          <span>Salvar Configurações</span>
+        </button>
+        
+        {showSaveMessage && (
+          <div className="mt-2 flex items-center justify-center space-x-2 text-green-600">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm">Configurações salvas com sucesso!</span>
+          </div>
+        )}
+      </div>
+
+      {/* Modal de Importação */}
+      <ImportDatabaseModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+      />
     </div>
   )
 }

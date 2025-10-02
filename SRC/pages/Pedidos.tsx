@@ -729,11 +729,11 @@ ${pedido.tempoEstimado || pedido.tempoEstimadoMinutos || 30} minutos
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600">Cliente</p>
-                          <p className="font-medium text-gray-900">{pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado'}</p>
+                          <p className="font-medium text-gray-900">{pedido.clienteNome || 'Cliente não informado'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Telefone</p>
-                          <p className="font-medium text-gray-900">{pedido.cliente?.telefone || pedido.clienteTelefone || 'Telefone não informado'}</p>
+                          <p className="font-medium text-gray-900">{pedido.clienteTelefone || 'Telefone não informado'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Data do Pedido</p>

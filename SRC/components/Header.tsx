@@ -21,21 +21,22 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-6">
+    <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-6">
       {/* Left side */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3 md:space-x-4">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
+          className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+          aria-label="Menu"
         >
           <Menu className="h-5 w-5" />
         </button>
         
         <div>
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate">
             Sistema de Delivery
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs md:text-sm text-gray-500 hidden sm:block">
             Gerencie seus pedidos e entregas
           </p>
         </div>

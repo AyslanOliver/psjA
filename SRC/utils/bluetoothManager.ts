@@ -5,8 +5,7 @@ import { BluetoothPrinterCordovaService } from './bluetoothPrinterCordova'
 // Detectar se estamos rodando no Cordova
 export function isCordovaEnvironment(): boolean {
   return typeof window !== 'undefined' && 
-         (window as any).cordova !== undefined &&
-         (window as any).bluetoothSerial !== undefined
+         (window as any).cordova !== undefined
 }
 
 // Detectar se estamos rodando no navegador web
@@ -14,6 +13,46 @@ export function isWebEnvironment(): boolean {
   return typeof window !== 'undefined' && 
          'bluetooth' in navigator &&
          !isCordovaEnvironment()
+}
+
+// Aguardar o carregamento do plugin Bluetooth no Cordova
+export function waitForCordovaBluetoothPlugin(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!isCordovaEnvironment()) {
+      resolve(false);
+      return;
+    }
+
+    // Se o plugin já está disponível
+    if ((window as any).bluetoothSerial) {
+      resolve(true);
+      return;
+    }
+
+    // Aguardar o evento deviceready
+    const checkPlugin = () => {
+      if ((window as any).bluetoothSerial) {
+        resolve(true);
+      } else {
+        // Tentar novamente após um pequeno delay
+        setTimeout(() => {
+          if ((window as any).bluetoothSerial) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }, 1000);
+      }
+    };
+
+    if ((window as any).cordova) {
+      document.addEventListener('deviceready', checkPlugin, false);
+      // Fallback caso deviceready já tenha sido disparado
+      setTimeout(checkPlugin, 100);
+    } else {
+      resolve(false);
+    }
+  });
 }
 
 // Classe gerenciadora que usa o serviço apropriado
@@ -40,7 +79,17 @@ export class BluetoothManager {
   // Verificar se Bluetooth está disponível
   isBluetoothAvailable(): boolean {
     if (isCordovaEnvironment()) {
-      return this.cordovaService.isBluetoothAvailable()
+      // No Cordova, verificar se o plugin está carregado
+      return typeof window !== 'undefined' && (window as any).bluetoothSerial !== undefined
+    } else {
+      return this.webService.isBluetoothAvailable()
+    }
+  }
+
+  // Verificar se Bluetooth está disponível de forma assíncrona (para Cordova)
+  async isBluetoothAvailableAsync(): Promise<boolean> {
+    if (isCordovaEnvironment()) {
+      return await waitForCordovaBluetoothPlugin()
     } else {
       return this.webService.isBluetoothAvailable()
     }

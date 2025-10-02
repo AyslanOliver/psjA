@@ -1,10 +1,15 @@
 
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import {LayoutDashboard, Package, ShoppingCart, Users, Truck, BarChart3, Settings, ChefHat, UserCheck} from 'lucide-react'
+import {LayoutDashboard, Package, ShoppingCart, Users, Truck, BarChart3, Settings, ChefHat, UserCheck, X} from 'lucide-react'
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const location = useLocation()
+  const isMobile = window.innerWidth < 768
 
   const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -25,15 +30,25 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-900 text-white w-64 min-h-screen flex flex-col">
+    <div className="bg-gray-900 text-white w-64 min-h-screen flex flex-col shadow-lg">
       {/* Logo */}
       <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center space-x-3">
-          <ChefHat className="h-8 w-8 text-orange-500" />
-          <div>
-            <h1 className="text-xl font-bold">Pastelaria</h1>
-            <p className="text-sm text-gray-400">Sistema de Delivery</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <ChefHat className="h-8 w-8 text-orange-500" />
+            <div>
+              <h1 className="text-xl font-bold">Pastelaria</h1>
+              <p className="text-sm text-gray-400">Sistema de Delivery</p>
+            </div>
           </div>
+          {isMobile && onClose && (
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-white"
+            >
+              <X size={24} />
+            </button>
+          )}
         </div>
       </div>
 
