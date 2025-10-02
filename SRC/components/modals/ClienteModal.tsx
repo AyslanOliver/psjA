@@ -1,15 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, Plus, Trash2, MapPin } from 'lucide-react'
-import { CreateClienteData, Endereco } from '../../hooks/useClientes'
+import { CreateClienteData, Endereco, Cliente } from '../../hooks/useClientes'
 
 interface ClienteModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: CreateClienteData) => Promise<void>
   loading?: boolean
+  cliente?: Cliente | null
+  mode?: 'create' | 'edit'
 }
 
-export function ClienteModal({ isOpen, onClose, onSubmit, loading = false }: ClienteModalProps) {
+export function ClienteModal({ isOpen, onClose, onSubmit, loading = false, cliente = null, mode = 'create' }: ClienteModalProps) {
   const [formData, setFormData] = useState<CreateClienteData>({
     nome: '',
     telefone: '',
@@ -26,6 +28,52 @@ export function ClienteModal({ isOpen, onClose, onSubmit, loading = false }: Cli
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Preenche o formulário quando estiver editando
+  useEffect(() => {
+    if (mode === 'edit' && cliente) {
+      setFormData({
+        nome: cliente.nome || '',
+        telefone: cliente.telefone || '',
+        enderecos: cliente.enderecos && cliente.enderecos.length > 0 
+          ? cliente.enderecos.map(endereco => ({
+              nome: endereco.nome || '',
+              rua: endereco.rua || '',
+              numero: endereco.numero || '',
+              complemento: endereco.complemento || '',
+              bairro: endereco.bairro || '',
+              referencia: endereco.referencia || '',
+              principal: endereco.principal || false
+            }))
+          : [{
+              nome: 'Principal',
+              rua: '',
+              numero: '',
+              complemento: '',
+              bairro: '',
+              referencia: '',
+              principal: true
+            }],
+        observacoes: cliente.observacoes || ''
+      })
+    } else {
+      // Reset para modo de criação
+      setFormData({
+        nome: '',
+        telefone: '',
+        enderecos: [{
+          nome: 'Principal',
+          rua: '',
+          numero: '',
+          complemento: '',
+          bairro: '',
+          referencia: '',
+          principal: true
+        }],
+        observacoes: ''
+      })
+    }
+  }, [mode, cliente, isOpen])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -148,7 +196,9 @@ export function ClienteModal({ isOpen, onClose, onSubmit, loading = false }: Cli
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Novo Cliente</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {mode === 'edit' ? 'Editar Cliente' : 'Novo Cliente'}
+          </h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"

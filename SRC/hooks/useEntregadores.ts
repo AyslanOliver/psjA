@@ -53,7 +53,19 @@ export const useEntregadores = () => {
       setEntregadores(response.entregadores || [])
     } catch (error: unknown) {
       console.error('Erro ao buscar entregadores:', error)
-      toast.error('Erro ao carregar entregadores')
+      
+      // Melhor tratamento de erro
+      let errorMessage = 'Erro ao carregar entregadores'
+      if (error instanceof Error) {
+        errorMessage = error.message
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        })
+      }
+      
+      toast.error(`Erro ao buscar entregadores: ${errorMessage}`)
     } finally {
       setLoading(false)
     }

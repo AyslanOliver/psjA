@@ -1011,27 +1011,59 @@ const Configuracoes: React.FC = () => {
                       Use esta função para testar se a impressora está configurada corretamente.
                     </p>
                     
-                    <button
-                      onClick={configuracoes.impressora.tipo === 'bluetooth' ? handleTestPrint : () => {
-                        // Simular teste de impressão para USB/Ethernet
-                        updateConfig('impressora', 'testeImpressao', true);
-                        setTimeout(() => {
-                          updateConfig('impressora', 'testeImpressao', false);
-                          alert('Teste de impressão enviado! Verifique se o cupom foi impresso.');
-                        }, 2000);
-                      }}
-                      disabled={
-                        !configuracoes.impressora.habilitada || 
-                        configuracoes.impressora.testeImpressao ||
-                        (configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice)
-                      }
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      <Printer className="h-4 w-4" />
-                      <span>
-                        {configuracoes.impressora.testeImpressao ? 'Enviando...' : 'Imprimir Teste'}
-                      </span>
-                    </button>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={configuracoes.impressora.tipo === 'bluetooth' ? handleTestPrint : () => {
+                          // Simular teste de impressão para USB/Ethernet
+                          updateConfig('impressora', 'testeImpressao', true);
+                          setTimeout(() => {
+                            updateConfig('impressora', 'testeImpressao', false);
+                            alert('Teste de impressão enviado! Verifique se o cupom foi impresso.');
+                          }, 2000);
+                        }}
+                        disabled={
+                          !configuracoes.impressora.habilitada || 
+                          configuracoes.impressora.testeImpressao ||
+                          (configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice)
+                        }
+                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <Printer className="h-4 w-4" />
+                        <span>
+                          {configuracoes.impressora.testeImpressao ? 'Enviando...' : 'Teste Básico'}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          if (!connectedDevice) {
+                            alert('Nenhuma impressora conectada');
+                            return;
+                          }
+                          updateConfig('impressora', 'testeImpressao', true);
+                          try {
+                            await bluetoothPrinter.printKitchenTest();
+                            alert('Teste da via da cozinha enviado com sucesso!');
+                          } catch (error) {
+                            console.error('Erro no teste da via da cozinha:', error);
+                            alert('Erro ao enviar teste da via da cozinha');
+                          } finally {
+                            updateConfig('impressora', 'testeImpressao', false);
+                          }
+                        }}
+                        disabled={
+                          !configuracoes.impressora.habilitada || 
+                          configuracoes.impressora.testeImpressao ||
+                          (configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice)
+                        }
+                        className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <Printer className="h-4 w-4" />
+                        <span>
+                          {configuracoes.impressora.testeImpressao ? 'Enviando...' : 'Teste Via Cozinha'}
+                        </span>
+                      </button>
+                    </div>
 
                     {configuracoes.impressora.tipo === 'bluetooth' && !connectedDevice && (
                       <p className="text-sm text-yellow-600">

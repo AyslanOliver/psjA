@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { usePedidos } from '../hooks/usePedidos'
 import { useProdutos } from '../hooks/useProdutos'
 import { useClientes } from '../hooks/useClientes'
@@ -7,7 +8,7 @@ import { getTamanhosDisponiveis, getPizzaPrice, SABORES_DISPONIVEIS, isSaborEspe
 import { bluetoothPrinter } from '../utils/bluetoothPrinter'
 
 const Pedidos: React.FC = () => {
-  const { pedidos, loading, createPedido, updateStatusPedido } = usePedidos()
+  const { pedidos, loading, createPedido, updateStatusPedido, deletePedido } = usePedidos()
   const { produtos, fetchProdutos } = useProdutos()
   const { clientes } = useClientes()
   const [filtroStatus, setFiltroStatus] = useState<string>('todos')
@@ -189,27 +190,39 @@ const Pedidos: React.FC = () => {
 
       // Preparar dados do pedido para impressão
       const orderData = {
-        id: pedido._id,
-        data: pedido.createdAt || new Date(),
-        cliente: pedido.clienteNome || 'Cliente não informado',
-        telefone: pedido.clienteTelefone || 'Não informado',
+        id: pedido.numeroPedido || pedido._id,
+        data: pedido.dataHora || pedido.createdAt || new Date(),
+        cliente: pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado',
+        telefone: pedido.cliente?.telefone || pedido.clienteTelefone || 'Não informado',
         endereco: pedido.enderecoEntrega ? 
           `${pedido.enderecoEntrega.rua}, ${pedido.enderecoEntrega.numero}${pedido.enderecoEntrega.complemento ? `, ${pedido.enderecoEntrega.complemento}` : ''} - ${pedido.enderecoEntrega.bairro}, ${pedido.enderecoEntrega.cidade}` :
           'Endereço não informado',
+        status: pedido.status || 'pendente',
+        prioridade: pedido.prioridade || 'normal',
+        urgente: pedido.urgente || false,
+        tempoPreparo: pedido.tempoEstimado || 30,
+        tempoEntrega: 15, // tempo padrão de entrega
+        entregador: pedido.entregador?.nome || null,
         itens: Array.isArray(pedido.itens) ? pedido.itens.map((item: any) => ({
           quantidade: item.quantidade,
           nome: item.nome,
           preco: (item.precoUnitario ?? item.preco) || 0,
           observacoes: item.observacoes,
-          sabores: item.sabores,
-          tamanho: item.tamanho
+          sabores: Array.isArray(item.sabores) ? item.sabores : (item.sabor ? [item.sabor] : []),
+          tamanho: item.tamanho,
+          ingredientesExtras: item.ingredientesExtras || [],
+          ingredientesRemovidos: item.ingredientesRemovidos || []
         })) : [],
-        subtotal: typeof pedido.subtotal === 'number' ? pedido.subtotal : (Array.isArray(pedido.itens) ? pedido.itens.reduce((acc: number, item: any) => acc + (item.precoTotal || ((item.precoUnitario || 0) * item.quantidade)), 0) : 0),
+        subtotal: typeof pedido.valorSubtotal === 'number' ? pedido.valorSubtotal : 
+                 (typeof pedido.subtotal === 'number' ? pedido.subtotal : 
+                 (Array.isArray(pedido.itens) ? pedido.itens.reduce((acc: number, item: any) => acc + (item.precoTotal || ((item.precoUnitario || 0) * item.quantidade)), 0) : 0)),
         taxaEntrega: pedido.taxaEntrega || 0,
-        total: typeof pedido.total === 'number' ? pedido.total : (typeof pedido.valorTotal === 'number' ? pedido.valorTotal : 0),
+        total: typeof pedido.valorTotal === 'number' ? pedido.valorTotal : 
+               (typeof pedido.total === 'number' ? pedido.total : 0),
         formaPagamento: pedido.formaPagamento || 'PIX',
-        troco: pedido.formaPagamento === 'dinheiro' && pedido.trocoParaValor ? pedido.trocoParaValor : null,
-        observacoesPedido: pedido.observacoesPedido
+        troco: pedido.formaPagamento === 'dinheiro' && pedido.trocoParaValor ? pedido.trocoParaValor : 
+               (pedido.formaPagamento === 'dinheiro' && pedido.troco ? pedido.troco : null),
+        observacoesPedido: pedido.observacoes || pedido.observacoesPedido
       }
 
       // Imprimir via cozinha usando a impressora Bluetooth
@@ -305,6 +318,124 @@ ${formatarItens(pedido.items)}
       modal.appendChild(content);
       document.body.appendChild(modal);
     });
+  };
+
+  // Função para excluir pedido
+  const handleDeletePedido = async (pedido: any) => {
+    const confirmDelete = window.confirm(`Tem certeza que deseja EXCLUIR o pedido #${pedido.numeroPedido || pedido.numero}? Esta ação não pode ser desfeita!`);
+    
+    if (confirmDelete) {
+      try {
+        await deletePedido(pedido._id);
+        toast.success('Pedido excluído com sucesso!');
+      } catch (error) {
+        console.error('Erro ao excluir pedido:', error);
+        toast.error('Erro ao excluir pedido');
+      }
+    }
+  };
+
+  // Função para ver detalhes do pedido
+  const handleViewDetails = (pedido: any) => {
+    const formatarEndereco = (endereco: any) => {
+      if (!endereco) return 'Endereço não informado';
+      return `${endereco.rua}, ${endereco.numero}${endereco.complemento ? `, ${endereco.complemento}` : ''} - ${endereco.bairro || ''}, ${endereco.cidade || ''} - CEP: ${endereco.cep || ''}`;
+    };
+
+    const formatarItens = (items: any[]) => {
+      if (!items || items.length === 0) return 'Nenhum item';
+      
+      return items.map((item, index) => {
+        const subtotal = (item.preco * item.quantidade).toFixed(2);
+        let itemText = `${index + 1}. ${item.nome}`;
+        
+        if (item.sabores && item.sabores.length > 0) {
+          itemText += ` (${item.sabores.join(', ')})`;
+        }
+        
+        if (item.tamanho) {
+          itemText += ` - ${item.tamanho}`;
+        }
+        
+        itemText += `\n   Qtd: ${item.quantidade}x R$ ${item.preco.toFixed(2)}\n   Subtotal: R$ ${subtotal}`;
+        
+        if (item.observacoes) {
+          itemText += `\n   Obs: ${item.observacoes}`;
+        }
+        
+        return itemText;
+      }).join('\n\n');
+    };
+
+    const total = typeof pedido.total === 'number' ? pedido.total : (typeof pedido.valorTotal === 'number' ? pedido.valorTotal : 0);
+    
+    const detalhes = `
+DETALHES DO PEDIDO #${pedido.numeroPedido || pedido.numero}
+
+📋 INFORMAÇÕES GERAIS
+Status: ${getStatusText(pedido.status)}
+Data: ${new Date(pedido.dataHora || pedido.createdAt).toLocaleString('pt-BR')}
+
+👤 CLIENTE
+Nome: ${pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado'}
+Telefone: ${pedido.cliente?.telefone || pedido.clienteTelefone || 'Telefone não informado'}
+
+📍 ENDEREÇO DE ENTREGA
+${formatarEndereco(pedido.endereco || pedido.enderecoEntrega)}
+
+🍕 ITENS DO PEDIDO
+${formatarItens(pedido.items || pedido.itens)}
+
+💰 VALORES
+Subtotal: R$ ${(pedido.valorSubtotal || pedido.subtotal || 0).toFixed(2)}
+Taxa de Entrega: R$ ${(pedido.taxaEntrega || 0).toFixed(2)}
+Total: R$ ${total.toFixed(2)}
+
+💳 PAGAMENTO
+Forma: ${pedido.formaPagamento || 'Não informado'}
+${pedido.troco ? `Troco para: R$ ${pedido.troco.toFixed(2)}` : ''}
+
+📝 OBSERVAÇÕES
+${pedido.observacoes || pedido.observacoesPedido || 'Nenhuma observação'}
+
+⏰ TEMPO ESTIMADO
+${pedido.tempoEstimado || pedido.tempoEstimadoMinutos || 30} minutos
+    `.trim();
+
+    // Criar modal para exibir os detalhes
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.5); z-index: 9999; display: flex; 
+      align-items: center; justify-content: center; padding: 20px;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white; padding: 24px; border-radius: 12px; 
+      max-width: 600px; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    `;
+    
+    content.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; color: #1f2937; font-size: 1.5rem; font-weight: 600;">Detalhes do Pedido</h3>
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">
+          ×
+        </button>
+      </div>
+      <pre style="white-space: pre-wrap; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; color: #374151; margin: 0;">${detalhes}</pre>
+      <div style="margin-top: 20px; text-align: right;">
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+          Fechar
+        </button>
+      </div>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
   };
 
   // Form handlers
@@ -614,7 +745,7 @@ ${formatarItens(pedido.items)}
                         <div>
                           <p className="text-sm text-gray-600">Valor Total</p>
                           <p className="font-bold text-green-600 text-lg">
-                            R$ {(pedido.total ?? 0).toFixed(2)}
+                            R$ {(pedido.total ?? pedido.valorTotal ?? 0).toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -681,12 +812,18 @@ ${formatarItens(pedido.items)}
                         <span>WhatsApp</span>
                       </button>
                       
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      <button 
+                        onClick={() => handleViewDetails(pedido)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
                         Ver Detalhes
                       </button>
                       
-                      <button className="text-red-600 hover:text-red-800 text-sm font-medium">
-                        Cancelar
+                      <button 
+                        onClick={() => handleDeletePedido(pedido)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Excluir
                       </button>
                     </div>
                   </div>

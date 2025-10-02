@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
                   <div key={pedido._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                     <p className="font-medium text-gray-900">Pedido #{pedido.numeroPedido || (pedido._id ? `PED-${String(pedido._id).slice(-6)}` : '')}</p>
-                    <p className="text-sm text-gray-600">{pedido.clienteNome || pedido.cliente?.nome || 'Cliente não informado'}</p>
+                    <p className="text-sm text-gray-600">{pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado'}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(pedido.createdAt || pedido.dataHora || Date.now()).toLocaleDateString('pt-BR')}
                     </p>

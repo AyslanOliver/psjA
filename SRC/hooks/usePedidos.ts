@@ -41,6 +41,7 @@ interface Pedido {
   taxaEntrega: number
   desconto: number
   total: number
+  valorTotal?: number // Campo da API
   formaPagamento: string
   trocoParaValor?: number
   status: string
@@ -166,8 +167,7 @@ export const usePedidos = () => {
         throw new Error('ID do pedido deve ser uma string')
       }
       
-      // fallback: remove does not exist, so we patch with a "deleted" flag
-      await api.updatePedido(pedidoId, { deleted: true, atualizadoEm: new Date().toISOString() })
+      await api.deletePedido(pedidoId)
       setPedidos(prev => prev.filter(p => p._id !== pedidoId))
       toast.success('Pedido excluído com sucesso!')
     } catch (error: unknown) {

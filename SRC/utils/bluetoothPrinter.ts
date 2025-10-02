@@ -270,26 +270,78 @@ export class BluetoothPrinterService {
       // Inicializar impressora
       await this.sendData(ESC_POS_COMMANDS.INIT)
       
-      // Cabeçalho da via cozinha
+      // Cabeçalho da via cozinha com destaque
       await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
-      await this.printCentered('VIA COZINHA')
+      await this.sendData(ESC_POS_COMMANDS.BOLD_ON)
+      await this.printCentered('*** VIA COZINHA ***')
+      await this.sendData(ESC_POS_COMMANDS.BOLD_OFF)
       await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
       
+      await this.printLine()
       await this.printSeparator()
       
-      // Informações básicas do pedido
-      await this.printBold(`Pedido: #${order.id}`)
-      await this.printLine(`Data: ${new Date(order.data).toLocaleString('pt-BR')}`)
-      await this.printLine(`Cliente: ${order.cliente}`)
+      // Informações do pedido em destaque
+      await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
+      await this.printBold(`PEDIDO #${order.id}`)
+      await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
+      
+      // Data e hora com formatação melhorada
+      const dataHora = new Date(order.data)
+      await this.printLine(`Data: ${dataHora.toLocaleDateString('pt-BR')}`)
+      await this.printLine(`Hora: ${dataHora.toLocaleTimeString('pt-BR')}`)
+      
+      // Status do pedido se disponível
+      if (order.status) {
+        await this.printBold(`Status: ${order.status.toUpperCase()}`)
+      }
+      
+      // Prioridade se for urgente
+      if (order.prioridade === 'alta' || order.urgente) {
+        await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
+        await this.printBold('*** PEDIDO URGENTE ***')
+        await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
+      }
+      
+      await this.printSeparator()
+      
+      // Informações do cliente
+      await this.printBold('CLIENTE:')
+      await this.printLine(`Nome: ${order.cliente}`)
       await this.printLine(`Telefone: ${order.telefone}`)
-      if (order.endereco) {
+      
+      // Endereço apenas se for delivery
+      if (order.endereco && order.endereco !== 'Endereço não informado') {
         await this.printLine(`Endereço: ${order.endereco}`)
       }
+      
+      // Forma de pagamento
       await this.printLine(`Pagamento: ${order.formaPagamento}`)
+      if (order.troco && order.troco > 0) {
+        await this.printBold(`Troco para: R$ ${order.troco.toFixed(2)}`)
+      }
       
       await this.printSeparator()
       
-      // Itens do pedido com detalhes para cozinha (mais legível)
+      // Horários estimados
+      const agora = new Date()
+      const tempoPreparo = order.tempoPreparo || 30 // minutos
+      const tempoEntrega = order.tempoEntrega || 15 // minutos
+      
+      const horarioPreparo = new Date(agora.getTime() + tempoPreparo * 60000)
+      const horarioEntrega = new Date(horarioPreparo.getTime() + tempoEntrega * 60000)
+      
+      await this.printBold('HORARIOS ESTIMADOS:')
+      await this.printLine(`Preparo: ${horarioPreparo.toLocaleTimeString('pt-BR')} (${tempoPreparo}min)`)
+      await this.printLine(`Entrega: ${horarioEntrega.toLocaleTimeString('pt-BR')}`)
+      
+      // Entregador se disponível
+      if (order.entregador) {
+        await this.printLine(`Entregador: ${order.entregador}`)
+      }
+      
+      await this.printSeparator()
+      
+      // Itens do pedido com formatação melhorada
       await this.sendData(ESC_POS_COMMANDS.UNDERLINE_ON)
       await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
       await this.printCentered('ITENS PARA PREPARO')
@@ -299,41 +351,77 @@ export class BluetoothPrinterService {
       
       for (let i = 0; i < order.itens.length; i++) {
         const item = order.itens[i]
-        // Destacar o nome do item em tamanho duplo e negrito
+        
+        // Número do item e nome em destaque
         await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_DOUBLE)
         await this.printBold(`${i + 1}. ${String(item.nome || '').toUpperCase()}`)
         await this.sendData(ESC_POS_COMMANDS.FONT_SIZE_NORMAL)
-        await this.printLine(`Qtd: ${item.quantidade}x`)
         
-        // Sabores (para pizzas)
+        // Quantidade em destaque
+        await this.printBold(`Quantidade: ${item.quantidade}x`)
+        
+        // Sabores (para pizzas) com formatação melhorada
         if (item.sabores && item.sabores.length > 0) {
-          await this.printLine(`Sabores: ${item.sabores.join(', ')}`)
+          await this.printBold('Sabores:')
+          for (const sabor of item.sabores) {
+            await this.printLine(`  - ${sabor}`)
+          }
         }
         
         // Tamanho
         if (item.tamanho) {
-          await this.printLine(`Tamanho: ${item.tamanho}`)
+          await this.printBold(`Tamanho: ${item.tamanho}`)
         }
         
-        // Observações do item
+        // Ingredientes extras se disponível
+        if (item.ingredientesExtras && item.ingredientesExtras.length > 0) {
+          await this.printBold('Ingredientes Extras:')
+          for (const ingrediente of item.ingredientesExtras) {
+            await this.printLine(`  + ${ingrediente}`)
+          }
+        }
+        
+        // Ingredientes removidos se disponível
+        if (item.ingredientesRemovidos && item.ingredientesRemovidos.length > 0) {
+          await this.printBold('Remover Ingredientes:')
+          for (const ingrediente of item.ingredientesRemovidos) {
+            await this.printLine(`  - ${ingrediente}`)
+          }
+        }
+        
+        // Observações do item em destaque
         if (item.observacoes) {
-          await this.printLine(`Obs: ${item.observacoes}`)
+          await this.sendData(ESC_POS_COMMANDS.UNDERLINE_ON)
+          await this.printBold('OBSERVAÇÕES:')
+          await this.sendData(ESC_POS_COMMANDS.UNDERLINE_OFF)
+          await this.printLine(item.observacoes)
         }
         
+        await this.printLine('--------------------------------')
         await this.printLine() // Linha em branco entre itens
       }
       
-      await this.printSeparator()
-      
       // Observações gerais do pedido
       if (order.observacoesPedido) {
-        await this.printBold('OBSERVACOES GERAIS:')
+        await this.sendData(ESC_POS_COMMANDS.UNDERLINE_ON)
+        await this.printBold('OBSERVAÇÕES GERAIS DO PEDIDO:')
+        await this.sendData(ESC_POS_COMMANDS.UNDERLINE_OFF)
         await this.printLine(order.observacoesPedido)
         await this.printSeparator()
       }
       
-      // Tempo estimado
-      await this.printCentered('Tempo Estimado: 30 min')
+      // Resumo final
+      await this.printBold('RESUMO:')
+      await this.printLine(`Total de itens: ${order.itens.length}`)
+      await this.printLine(`Valor total: R$ ${order.total.toFixed(2)}`)
+      
+      // Instruções para a cozinha
+      await this.printSeparator()
+      await this.printCentered('INSTRUÇÕES:')
+      await this.printLine('1. Verificar todos os itens')
+      await this.printLine('2. Conferir observações')
+      await this.printLine('3. Embalar adequadamente')
+      await this.printLine('4. Marcar como pronto')
       
       await this.printLine()
       await this.printLine()
@@ -368,6 +456,46 @@ export class BluetoothPrinterService {
       console.error('Erro no teste de impressão:', error)
       throw error
     }
+  }
+
+  // Teste específico da via da cozinha
+  async printKitchenTest(): Promise<void> {
+    const testOrder = {
+      id: 'TEST001',
+      data: new Date(),
+      cliente: 'Cliente Teste',
+      telefone: '(11) 99999-9999',
+      endereco: 'Rua Teste, 123 - Centro, São Paulo',
+      status: 'pendente',
+      prioridade: 'alta',
+      urgente: true,
+      tempoPreparo: 25,
+      tempoEntrega: 15,
+      entregador: 'João Silva',
+      formaPagamento: 'dinheiro',
+      troco: 50.00,
+      total: 45.90,
+      observacoesPedido: 'Cliente pediu para não tocar a campainha',
+      itens: [
+        {
+          quantidade: 2,
+          nome: 'Pizza Margherita',
+          sabores: ['Margherita', 'Calabresa'],
+          tamanho: 'Grande',
+          observacoes: 'Massa fina, sem cebola',
+          ingredientesExtras: ['Azeitona', 'Orégano'],
+          ingredientesRemovidos: ['Cebola']
+        },
+        {
+          quantidade: 1,
+          nome: 'Refrigerante Coca-Cola',
+          tamanho: '2L',
+          observacoes: 'Bem gelado'
+        }
+      ]
+    }
+
+    await this.printKitchenOrder(testOrder)
   }
 
   // Verificar status da conexão

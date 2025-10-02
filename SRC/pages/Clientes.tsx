@@ -2,13 +2,18 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Plus, Eye, Edit, Trash2, Phone, Mail, MapPin, Calendar, DollarSign, Package } from 'lucide-react'
 import { api } from '../lib/api'
-import { useClientes } from '../hooks/useClientes'
+import { useClientes, Cliente } from '../hooks/useClientes'
 import { ClienteModal } from '../components/modals/ClienteModal'
+import { ClienteViewModal } from '../components/modals/ClienteViewModal'
+import { toast } from 'react-hot-toast'
 
 const Clientes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { clientes, loading, error, createCliente } = useClientes()
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const { clientes, loading, error, createCliente, updateCliente, deleteCliente } = useClientes()
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -37,6 +42,50 @@ const Clientes: React.FC = () => {
     }
   }
 
+  const handleEditCliente = async (clienteData: any) => {
+    try {
+      if (selectedCliente) {
+        await updateCliente(selectedCliente._id, clienteData)
+        setIsModalOpen(false)
+        setSelectedCliente(null)
+      }
+    } catch (error) {
+      console.error('Erro ao editar cliente:', error)
+    }
+  }
+
+  const handleViewCliente = (cliente: Cliente) => {
+    setSelectedCliente(cliente)
+    setIsViewModalOpen(true)
+  }
+
+  const handleEditClick = (cliente: Cliente) => {
+    setSelectedCliente(cliente)
+    setModalMode('edit')
+    setIsModalOpen(true)
+  }
+
+  const handleDeleteCliente = async (cliente: Cliente) => {
+    if (window.confirm(`Tem certeza que deseja excluir o cliente "${cliente.nome}"?`)) {
+      try {
+        await deleteCliente(cliente._id)
+      } catch (error) {
+        console.error('Erro ao excluir cliente:', error)
+      }
+    }
+  }
+
+  const handleNewCliente = () => {
+    setSelectedCliente(null)
+    setModalMode('create')
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedCliente(null)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -46,7 +95,7 @@ const Clientes: React.FC = () => {
           <p className="text-gray-600 mt-2">Gerencie sua base de clientes</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleNewCliente}
           className="mt-4 sm:mt-0 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
@@ -201,13 +250,25 @@ const Clientes: React.FC = () => {
                     Ticket médio: R$ {ticketMedio.toFixed(2)}
                   </span>
                   <div className="flex items-center space-x-2">
-                    <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                    <button 
+                      onClick={() => handleViewCliente(cliente)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                      title="Visualizar cliente"
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg">
+                    <button 
+                      onClick={() => handleEditClick(cliente)}
+                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+                      title="Editar cliente"
+                    >
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                    <button 
+                      onClick={() => handleDeleteCliente(cliente)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                      title="Excluir cliente"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -228,12 +289,21 @@ const Clientes: React.FC = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal de Criação/Edição */}
       <ClienteModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateCliente}
+        onClose={handleCloseModal}
+        onSubmit={modalMode === 'create' ? handleCreateCliente : handleEditCliente}
         loading={loading}
+        cliente={selectedCliente}
+        mode={modalMode}
+      />
+
+      {/* Modal de Visualização */}
+      <ClienteViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        cliente={selectedCliente}
       />
     </div>
   )

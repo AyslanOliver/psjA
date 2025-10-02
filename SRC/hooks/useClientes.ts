@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
+import { toast } from 'react-hot-toast'
 
 export interface Cliente {
   _id: string
@@ -69,6 +70,47 @@ export function useClientes() {
     }
   }
 
+  const updateCliente = async (id: string, clienteData: Partial<CreateClienteData>) => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await api.updateCliente(id, clienteData)
+      
+      // Atualiza o cliente na lista
+      setClientes(prev => prev.map(cliente => 
+        cliente._id === id ? { ...cliente, ...response } : cliente
+      ))
+      
+      toast.success('Cliente atualizado com sucesso!')
+      return response
+    } catch (err: any) {
+      setError(err.message || 'Erro ao atualizar cliente')
+      toast.error('Erro ao atualizar cliente')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteCliente = async (id: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+      await api.deleteCliente(id)
+      
+      // Remove o cliente da lista
+      setClientes(prev => prev.filter(cliente => cliente._id !== id))
+      
+      toast.success('Cliente excluído com sucesso!')
+    } catch (err: any) {
+      setError(err.message || 'Erro ao excluir cliente')
+      toast.error('Erro ao excluir cliente')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchClientes()
   }, [])
@@ -79,6 +121,8 @@ export function useClientes() {
     error,
     fetchClientes,
     createCliente,
+    updateCliente,
+    deleteCliente,
     refetch: fetchClientes
   }
 }

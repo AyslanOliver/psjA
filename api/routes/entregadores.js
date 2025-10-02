@@ -31,10 +31,15 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    // Validar campos de ordenação permitidos
+    const allowedSortFields = ['nome', 'email', 'telefone', 'status', 'ativo', 'createdAt', 'updatedAt', 'dataAdmissao', 'totalEntregas'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'nome';
+    const validSortOrder = ['asc', 'desc'].includes(sortOrder) ? sortOrder : 'asc';
+
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
-      sort: { [sortBy]: sortOrder === 'desc' ? -1 : 1 }
+      sort: { [validSortBy]: validSortOrder === 'desc' ? -1 : 1 }
     };
 
     const entregadores = await Entregador.find(filter)
@@ -51,6 +56,7 @@ router.get('/', async (req, res) => {
       total
     });
   } catch (error) {
+    console.error('Erro na rota GET /entregadores:', error);
     res.status(500).json({ message: error.message });
   }
 });

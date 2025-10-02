@@ -19,7 +19,7 @@ const Entregas: React.FC = () => {
     const matchStatus = !filtroStatus || pedido.status === filtroStatus
     const matchBusca = !busca || 
       pedido.numeroPedido.toLowerCase().includes(busca.toLowerCase()) ||
-      pedido.clienteNome.toLowerCase().includes(busca.toLowerCase()) ||
+      (pedido.cliente?.nome || pedido.clienteNome || '').toLowerCase().includes(busca.toLowerCase()) ||
       (pedido.entregadorNome && pedido.entregadorNome.toLowerCase().includes(busca.toLowerCase()))
     return matchStatus && matchBusca
   })
@@ -219,8 +219,8 @@ const Entregas: React.FC = () => {
                 const tempoEntrega = calcularTempoEntrega(pedido.horarioSaidaEntrega)
                 
                 const numeroExibicao = pedido.numeroPedido || (pedido._id ? `PED-${String(pedido._id).slice(-6)}` : '#')
-                const nomeCliente = pedido.clienteNome || pedido.cliente?.nome || 'Cliente não informado'
-                const telCliente = pedido.clienteTelefone || pedido.cliente?.telefone || 'Telefone não informado'
+                const nomeCliente = pedido.cliente?.nome || pedido.clienteNome || 'Cliente não informado'
+                const telCliente = pedido.cliente?.telefone || pedido.clienteTelefone || 'Telefone não informado'
                 const totalPedido = (typeof pedido.total === 'number' ? pedido.total : (typeof (pedido as any).valorTotal === 'number' ? (pedido as any).valorTotal : 0))
 
                 return (

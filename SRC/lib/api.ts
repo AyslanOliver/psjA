@@ -91,6 +91,12 @@ class ApiClient {
     })
   }
 
+  async deletePedido(id: string) {
+    return this.request(`/pedidos/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Clientes
   async getClientes(params: any = {}) {
     const queryString = new URLSearchParams(params).toString()
@@ -102,6 +108,19 @@ class ApiClient {
     return this.request('/clientes', {
       method: 'POST',
       body: JSON.stringify(cliente),
+    })
+  }
+
+  async updateCliente(id: string, cliente: any) {
+    return this.request(`/clientes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(cliente),
+    })
+  }
+
+  async deleteCliente(id: string) {
+    return this.request(`/clientes/${id}`, {
+      method: 'DELETE',
     })
   }
 

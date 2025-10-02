@@ -151,6 +151,15 @@ pedidoSchema.post('findOneAndUpdate', async function(doc) {
   }
 });
 
+// Virtual field para compatibilidade com frontend
+pedidoSchema.virtual('total').get(function() {
+  return this.valorTotal;
+});
+
+// Garantir que virtuals sejam incluídos no JSON
+pedidoSchema.set('toJSON', { virtuals: true });
+pedidoSchema.set('toObject', { virtuals: true });
+
 // Método para calcular valor total
 pedidoSchema.methods.calcularTotal = function() {
   this.valorSubtotal = this.items.reduce((total, item) => {
