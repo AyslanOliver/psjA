@@ -1,6 +1,6 @@
 
 import * as React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuth, AuthProvider } from './SRC/hooks/useAuth.tsx'
 import Layout from './SRC/components/Layout'

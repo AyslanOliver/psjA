@@ -1,0 +1,1687 @@
+[{
+  "_id": {
+    "$oid": "68dd5839f8692a0cbd30cd74"
+  },
+  "nome": "Pastel de Carne",
+  "descricao": "Pastel recheado com carne temperada",
+  "preco": 6,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:05.356Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:05.356Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5839f8692a0cbd30cd76"
+  },
+  "nome": "Pastel de Frango",
+  "descricao": "Pastel recheado com frango desfiado",
+  "preco": 6,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:05.518Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:05.518Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5839f8692a0cbd30cd78"
+  },
+  "nome": "Pastel de Queijo",
+  "descricao": "Pastel recheado com queijo derretido",
+  "preco": 6,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:05.719Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:05.719Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5839f8692a0cbd30cd7a"
+  },
+  "nome": "Pastel de Pizza",
+  "descricao": "Pastel com recheio de pizza",
+  "preco": 7,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:05.876Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:05.876Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd7c"
+  },
+  "nome": "Pastel de Presunto com Queijo",
+  "descricao": "Pastel recheado com presunto e queijo",
+  "preco": 7,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.032Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.032Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd7e"
+  },
+  "nome": "Pastel Romeu e Julieta",
+  "descricao": "Pastel doce com goiabada e queijo",
+  "preco": 7,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.189Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.189Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd80"
+  },
+  "nome": "Pastel de Frango com Queijo",
+  "descricao": "Pastel recheado com frango e queijo",
+  "preco": 7,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.344Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.344Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd82"
+  },
+  "nome": "Pastel de Frango com Catupiry",
+  "descricao": "Pastel recheado com frango e catupiry",
+  "preco": 7,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.498Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.498Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd84"
+  },
+  "nome": "Pastel de Calabresa, Queijo e Milho",
+  "descricao": "Pastel recheado com calabresa, queijo e milho",
+  "preco": 7,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.656Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.656Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd86"
+  },
+  "nome": "Pastel da Casa",
+  "descricao": "Pastel especial da casa",
+  "preco": 25,
+  "categoria": "pasteis",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.811Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.811Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583af8692a0cbd30cd88"
+  },
+  "nome": "Enroladinho",
+  "descricao": "Salgado enrolado tradicional",
+  "preco": 6,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:06.967Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:06.967Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583bf8692a0cbd30cd8a"
+  },
+  "nome": "Banana Real",
+  "descricao": "Salgado com banana",
+  "preco": 5,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:07.125Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:07.125Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583bf8692a0cbd30cd8c"
+  },
+  "nome": "Empada",
+  "descricao": "Empada tradicional",
+  "preco": 6,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:07.294Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:07.294Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583bf8692a0cbd30cd8e"
+  },
+  "nome": "Empada Doce",
+  "descricao": "Empada doce",
+  "preco": 3,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:07.451Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:07.451Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583bf8692a0cbd30cd90"
+  },
+  "nome": "Coxinha",
+  "descricao": "Coxinha de frango",
+  "preco": 6,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:07.608Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:07.608Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583bf8692a0cbd30cd92"
+  },
+  "nome": "Esfirra",
+  "descricao": "Esfirra tradicional",
+  "preco": 6,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:07.764Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:07.764Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583bf8692a0cbd30cd94"
+  },
+  "nome": "Empada de Chocolate",
+  "descricao": "Empada doce de chocolate",
+  "preco": 4,
+  "categoria": "salgados",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:07.923Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:07.923Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583cf8692a0cbd30cd96"
+  },
+  "nome": "Bolo Fatia",
+  "descricao": "Fatia de bolo",
+  "preco": 10,
+  "categoria": "bolo",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:08.096Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:08.096Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583cf8692a0cbd30cd98"
+  },
+  "nome": "Sorvete",
+  "descricao": "Bolo gelado tipo sorvete",
+  "preco": 3,
+  "categoria": "bolo",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:08.252Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:13:27.842Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583cf8692a0cbd30cd9a"
+  },
+  "nome": "Milk Shake",
+  "descricao": "Milk shake cremoso",
+  "preco": 15,
+  "categoria": "bolo",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:08.408Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:08.408Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583cf8692a0cbd30cd9c"
+  },
+  "nome": "Casquinha",
+  "descricao": "Sorvete na casquinha",
+  "preco": 7,
+  "categoria": "bolo",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:08.564Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:08.564Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583cf8692a0cbd30cd9e"
+  },
+  "nome": "Refrigerante 1L (Coca-cola, Fanta, Kuat, Pepsi)",
+  "descricao": "Refrigerante de 1 litro",
+  "preco": 7,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:08.720Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T23:46:10.797Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583cf8692a0cbd30cda0"
+  },
+  "nome": "Refrigerante 1,5L (Coca-cola)",
+  "descricao": "Coca-cola de 1,5 litro",
+  "preco": 10,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:08.877Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T23:45:54.248Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd583df8692a0cbd30cda2"
+  },
+  "nome": "Refrigerante de Lata (Coca-cola, Fanta, Kuat, Pepsi)",
+  "descricao": "Refrigerante em lata",
+  "preco": 5,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "imagem": "https://via.placeholder.com/300x200?text=Produto",
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:35:09.034Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:35:09.034Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5a43c2c4e46ea4f96daa"
+  },
+  "nome": "Água Mineral",
+  "descricao": "Água mineral natural",
+  "preco": 3,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:43:47.678Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:43:47.678Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5a46c2c4e46ea4f96dac"
+  },
+  "nome": "Refrigerante de Lata (Coca-cola, Fanta, Kuat, Pepsi)",
+  "descricao": "Refrigerante em lata",
+  "preco": 5,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:43:50.788Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:43:50.788Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5a48c2c4e46ea4f96dae"
+  },
+  "nome": "Coca Retornável",
+  "descricao": "Coca-Cola em garrafa retornável",
+  "preco": 6,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:43:52.898Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:43:52.898Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5a4bc2c4e46ea4f96db2"
+  },
+  "nome": "Suco Natural",
+  "descricao": "Suco natural da fruta",
+  "preco": 7,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:43:55.082Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:43:55.082Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd5a4bc2c4e46ea4f96db4"
+  },
+  "nome": "Energético em Lata",
+  "descricao": "Energético em lata",
+  "preco": 8,
+  "categoria": "bebidas",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T16:43:55.692Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T16:43:55.692Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff49"
+  },
+  "nome": "Pizza Baiana",
+  "descricao": "Molho, mussarela, calabresa, cebola, pimenta, ovo e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Baiana",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "molho",
+    "mussarela",
+    "calabresa",
+    "cebola",
+    "pimenta",
+    "ovo",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:42.728Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:42.728Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff4b"
+  },
+  "nome": "Pizza Frango c/ Catupiry",
+  "descricao": "Frango desfiado, tomate, mussarela, oregano e azeitona",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Frango c/ Catupiry",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "frango",
+    "desfiado",
+    "tomate",
+    "mussarela",
+    "oregano",
+    "azeitona"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:42.777Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:42.777Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff4d"
+  },
+  "nome": "Pizza Mineira",
+  "descricao": "Mussarela, frango, tomate, cebola, milho verde, catupiry e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Mineira",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "mussarela",
+    "frango",
+    "tomate",
+    "cebola",
+    "milho",
+    "verde",
+    "catupiry",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:42.820Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:42.820Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff4f"
+  },
+  "nome": "Pizza Calabresa",
+  "descricao": "Calabresa, mussarela, tomate, cebola, azeitona e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Calabresa",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "calabresa",
+    "mussarela",
+    "tomate",
+    "cebola",
+    "azeitona",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:42.865Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:42.865Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff51"
+  },
+  "nome": "Pizza Mista",
+  "descricao": "Calabresa, frango, milho, tomate, cebola, azeitona, mussarela e queijo",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Mista",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "calabresa",
+    "frango",
+    "milho",
+    "tomate",
+    "cebola",
+    "azeitona",
+    "mussarela",
+    "queijo"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:42.906Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:42.906Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff53"
+  },
+  "nome": "Pizza Portuguesa",
+  "descricao": "Mussarela, presunto, ervilha, tomate, cebola, ovo e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Portuguesa",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "mussarela",
+    "presunto",
+    "ervilha",
+    "tomate",
+    "cebola",
+    "ovo",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:42.949Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:42.949Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64169f1705a8dd6bff55"
+  },
+  "nome": "Pizza Frango",
+  "descricao": "Frango, mussarela, tomate, cebola, milho e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Frango",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "frango",
+    "mussarela",
+    "tomate",
+    "cebola",
+    "milho",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:43.000Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:43.000Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64179f1705a8dd6bff57"
+  },
+  "nome": "Pizza Milho Verde",
+  "descricao": "Mussarela, tomate, cebola, milho verde e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Milho Verde",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "mussarela",
+    "tomate",
+    "cebola",
+    "milho",
+    "verde",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:43.054Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:43.054Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64179f1705a8dd6bff59"
+  },
+  "nome": "Pizza Presunto",
+  "descricao": "Presunto, mussarela, tomate, cebola e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Presunto",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 38,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 45,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 55,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "presunto",
+    "mussarela",
+    "tomate",
+    "cebola",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:43.102Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:43.102Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64179f1705a8dd6bff5b"
+  },
+  "nome": "Pizza Atum",
+  "descricao": "Mussarela, atum, tomate, cebola e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Atum",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 45,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 55,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 60,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": true,
+  "ingredientes": [
+    "mussarela",
+    "atum",
+    "tomate",
+    "cebola",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:43.160Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:43.160Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64179f1705a8dd6bff5d"
+  },
+  "nome": "Pizza Bacon",
+  "descricao": "Mussarela, bacon, tomate, cebola e oregano",
+  "preco": 25,
+  "categoria": "pizzas",
+  "sabor": "Bacon",
+  "tamanhos": [
+    {
+      "nome": "Brotinho (N15)",
+      "preco": 9,
+      "descricao": "15cm"
+    },
+    {
+      "nome": "Brotão (N20)",
+      "preco": 12,
+      "descricao": "20cm"
+    },
+    {
+      "nome": "Pequena (N25)",
+      "preco": 25,
+      "descricao": "25cm"
+    },
+    {
+      "nome": "Média (N15)",
+      "preco": 45,
+      "descricao": "30cm"
+    },
+    {
+      "nome": "Grande (N30)",
+      "preco": 55,
+      "descricao": "35cm"
+    },
+    {
+      "nome": "Família (N40)",
+      "preco": 60,
+      "descricao": "40cm"
+    }
+  ],
+  "temVariacoes": true,
+  "disponivel": true,
+  "destaque": true,
+  "ingredientes": [
+    "mussarela",
+    "bacon",
+    "tomate",
+    "cebola",
+    "oregano"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 25,
+  "createdAt": {
+    "$date": "2025-10-01T17:25:43.224Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:25:43.224Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f05f"
+  },
+  "nome": "Misto Quente",
+  "descricao": "Pão, presunto e queijo",
+  "preco": 6,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "presunto",
+    "queijo"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 10,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.419Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.419Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f061"
+  },
+  "nome": "Misto Completo",
+  "descricao": "Pão, presunto, queijo, ovo, tomate, alface e maionese",
+  "preco": 7,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "presunto",
+    "queijo",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 12,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.465Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.465Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f063"
+  },
+  "nome": "Hambúrguer",
+  "descricao": "Pão, hambúrguer, queijo, ovo, tomate, alface e maionese",
+  "preco": 12,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "hambúrguer",
+    "queijo",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.509Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.509Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f065"
+  },
+  "nome": "Americano",
+  "descricao": "Pão, hambúrguer, queijo, bacon, ovo, tomate, alface e maionese",
+  "preco": 13,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "hambúrguer",
+    "queijo",
+    "bacon",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.549Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.549Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f067"
+  },
+  "nome": "X-Bacon",
+  "descricao": "Pão, hambúrguer, queijo, bacon, ovo, tomate, alface e maionese",
+  "preco": 15,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": true,
+  "ingredientes": [
+    "pão",
+    "hambúrguer",
+    "queijo",
+    "bacon",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.594Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.594Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f069"
+  },
+  "nome": "X-Salada",
+  "descricao": "Pão, hambúrguer, queijo, ovo, tomate, alface e maionese",
+  "preco": 10,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "hambúrguer",
+    "queijo",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 12,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.639Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.639Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f06b"
+  },
+  "nome": "X-Frango",
+  "descricao": "Pão, frango, queijo, ovo, tomate, alface e maionese",
+  "preco": 13,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "frango",
+    "queijo",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.682Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.682Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f06d"
+  },
+  "nome": "X-Egg",
+  "descricao": "Pão, hambúrguer, queijo, ovo, tomate, alface e maionese",
+  "preco": 13,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": false,
+  "ingredientes": [
+    "pão",
+    "hambúrguer",
+    "queijo",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 12,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.726Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.726Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f06f"
+  },
+  "nome": "X-Frango c/CA",
+  "descricao": "Pão, frango, catupiry, ovo, tomate, alface e maionese",
+  "preco": 17,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": true,
+  "ingredientes": [
+    "pão",
+    "frango",
+    "catupiry",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 15,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.768Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.768Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68dd64b54d13375efd27f071"
+  },
+  "nome": "X-Tudo",
+  "descricao": "Pão, hambúrguer, queijo, bacon, presunto, frango, ovo, tomate, alface e maionese",
+  "preco": 25,
+  "categoria": "lanches_na_chapa",
+  "temVariacoes": false,
+  "disponivel": true,
+  "destaque": true,
+  "ingredientes": [
+    "pão",
+    "hambúrguer",
+    "queijo",
+    "bacon",
+    "presunto",
+    "frango",
+    "ovo",
+    "tomate",
+    "alface",
+    "maionese"
+  ],
+  "alergicos": [],
+  "tempoPreparacao": 20,
+  "tamanhos": [],
+  "createdAt": {
+    "$date": "2025-10-01T17:28:21.811Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-01T17:28:21.811Z"
+  },
+  "__v": 0
+}]

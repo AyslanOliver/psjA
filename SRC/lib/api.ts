@@ -16,7 +16,7 @@ const isOnline = () => {
 };
 
 const API_BASE_URL = isCordova() || process.env.NODE_ENV === 'production'
-  ? 'https://psja.onrender.com'  // URL do Render quando em produção ou Cordova
+  ? 'https://psja.onrender.com/api'  // URL do Render quando em produção ou Cordova
   : 'http://localhost:3001/api'  // API local para desenvolvimento
 
 class ApiClient {

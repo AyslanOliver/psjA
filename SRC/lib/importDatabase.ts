@@ -7,28 +7,25 @@ import { localDB } from './localDatabase';
  */
 export async function importDataToLocalDB(jsonData: any[], collectionName: string): Promise<void> {
   try {
-    // Verificar se o banco de dados está inicializado
-    await localDB.initDatabase();
-    
     console.log(`Importando ${jsonData.length} itens para ${collectionName}...`);
     
     // Limpar a coleção atual antes de importar novos dados
-    await localDB.clearCollection(collectionName);
+    await clearCollection(collectionName as keyof any);
     
     // Importar cada item para a coleção
     for (const item of jsonData) {
       switch (collectionName) {
         case 'produtos':
-          await localDB.createProduto(item);
+          await createProduto(item);
           break;
         case 'clientes':
-          await localDB.createCliente(item);
+          await createCliente(item);
           break;
         case 'pedidos':
-          await localDB.createPedido(item);
+          await createPedido(item);
           break;
         case 'entregadores':
-          await localDB.createEntregador(item);
+          await createEntregador(item);
           break;
         case 'configuracoes':
           await localDB.salvarConfiguracoes(item);
@@ -79,7 +76,8 @@ export async function importFromJsonFile(file: File, collectionName: string): Pr
  */
 export async function clearLocalCollection(collectionName: string): Promise<void> {
   try {
-    await localDB.clearCollection(collectionName);
+    console.log(`Limpando coleção ${collectionName}...`);
+    await clearCollection(collectionName as keyof any);
     console.log(`Coleção ${collectionName} limpa com sucesso!`);
   } catch (error) {
     console.error(`Erro ao limpar coleção ${collectionName}:`, error);
@@ -87,29 +85,23 @@ export async function clearLocalCollection(collectionName: string): Promise<void
   }
 }
 
-// Adicionar método para limpar coleção ao localDB
-declare module './localDatabase' {
-  interface PizzariaDB {
-    clearCollection(storeName: string): Promise<void>;
-    createEntregador(entregador: any): Promise<number>;
-  }
+// Implementar métodos auxiliares usando a estrutura correta do localDB
+async function clearCollection(storeName: keyof any): Promise<void> {
+  await localDB.clear(storeName);
 }
 
-// Implementar o método clearCollection no protótipo do localDB
-localDB.clearCollection = async function(storeName: string): Promise<void> {
-  const db = await this.getDB();
-  const tx = db.transaction(storeName, 'readwrite');
-  const store = tx.objectStore(storeName);
-  await store.clear();
-  await tx.done;
-};
+async function createEntregador(entregador: any): Promise<void> {
+  await localDB.add('entregadores', entregador);
+}
 
-// Implementar o método createEntregador no protótipo do localDB
-localDB.createEntregador = async function(entregador: any): Promise<number> {
-  const db = await this.getDB();
-  const tx = db.transaction('entregadores', 'readwrite');
-  const store = tx.objectStore('entregadores');
-  const id = await store.add(entregador);
-  await tx.done;
-  return id as number;
-};
+async function createProduto(produto: any): Promise<void> {
+  await localDB.add('produtos', produto);
+}
+
+async function createCliente(cliente: any): Promise<void> {
+  await localDB.add('clientes', cliente);
+}
+
+async function createPedido(pedido: any): Promise<void> {
+  await localDB.add('pedidos', pedido);
+}

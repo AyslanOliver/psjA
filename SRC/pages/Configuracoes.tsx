@@ -13,12 +13,15 @@ import {
   Search,
   Database,
   Download,
-  Upload
+  Upload,
+  Package
 } from 'lucide-react'
 import { bluetoothManager } from '../utils/bluetoothManager'
 import type { BluetoothDevice } from '../utils/bluetoothPrinter'
 import { api } from '../lib/api'
+import localDB from '../lib/localDatabase'
 import ImportDatabaseModal from '../components/ImportDatabaseModal'
+import { importarProdutos } from '../../scripts/importProdutos'
 
 interface ConfiguracaoSistema {
   loja: {
@@ -79,6 +82,8 @@ const Configuracoes: React.FC = () => {
   const [activeTab, setActiveTab] = useState('loja')
   const [showSaveMessage, setShowSaveMessage] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [importandoProdutos, setImportandoProdutos] = useState(false)
+  const [resultadoImportacao, setResultadoImportacao] = useState<{ sucesso: boolean; total: number; erro?: string } | null>(null)
   
   // Estados para gerenciamento da impressora Bluetooth
   const [bluetoothDevices, setBluetoothDevices] = useState<BluetoothDevice[]>([])
@@ -163,14 +168,72 @@ const Configuracoes: React.FC = () => {
     { value: 'domingo', label: 'Dom' }
   ]
 
+  // Carregar configurações salvas do banco local
+  useEffect(() => {
+    const carregarConfiguracoes = async () => {
+      try {
+        const configSalvas = await localDB.getConfiguracoes()
+        if (configSalvas) {
+          console.log('Configurações carregadas do banco local:', configSalvas)
+          setConfiguracoes(configSalvas)
+        } else {
+          console.log('Nenhuma configuração salva encontrada, usando padrões')
+          // Salvar configurações padrão no banco local
+          await localDB.salvarConfiguracoes(configuracoes)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error)
+      }
+    }
+
+    carregarConfiguracoes()
+  }, [])
+
   const handleSave = async () => {
     try {
-      await api.updateConfiguracoes(configuracoes)
+      // Salvar no banco local primeiro (sempre funciona)
+      await localDB.salvarConfiguracoes(configuracoes)
+      console.log('Configurações salvas no banco local')
+      
+      // Tentar salvar na API (pode falhar se offline)
+      try {
+        await api.updateConfiguracoes(configuracoes)
+        console.log('Configurações sincronizadas com a API')
+      } catch (apiError) {
+        console.warn('Falha ao sincronizar com API, mas configurações salvas localmente:', apiError)
+      }
+      
       setShowSaveMessage(true)
       setTimeout(() => setShowSaveMessage(false), 3000)
     } catch (error) {
       console.error('Erro ao salvar configurações:', error)
       alert('Falha ao salvar configurações.')
+    }
+  }
+
+  const handleImportarProdutos = async () => {
+    setImportandoProdutos(true)
+    setResultadoImportacao(null)
+    
+    try {
+      const resultado = await importarProdutos()
+      setResultadoImportacao(resultado)
+      
+      if (resultado.sucesso) {
+        alert(`✅ Importação concluída! ${resultado.total} produtos importados com sucesso.`)
+      } else {
+        alert(`❌ Erro na importação: ${resultado.erro}`)
+      }
+    } catch (error) {
+      const mensagemErro = error instanceof Error ? error.message : 'Erro desconhecido'
+      setResultadoImportacao({
+        sucesso: false,
+        total: 0,
+        erro: mensagemErro
+      })
+      alert(`❌ Erro na importação: ${mensagemErro}`)
+    } finally {
+      setImportandoProdutos(false)
     }
   }
 
@@ -756,8 +819,50 @@ const Configuracoes: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Gerenciamento de Dados</h2>
               
               <div className="space-y-4">
+                <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                  <h3 className="text-md font-medium text-orange-900 mb-2 flex items-center space-x-2">
+                    <Package className="h-4 w-4" />
+                    <span>Importar Produtos da Pastelaria</span>
+                  </h3>
+                  <p className="text-sm text-orange-700 mb-3">
+                    Importe todos os produtos da pastelaria (pastéis, salgados, bolos e bebidas) para o banco local
+                  </p>
+                  <button
+                    onClick={handleImportarProdutos}
+                    disabled={importandoProdutos}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Package className="h-4 w-4" />
+                    <span>{importandoProdutos ? 'Importando...' : 'Importar Produtos da Pastelaria'}</span>
+                  </button>
+                  
+                  {resultadoImportacao && (
+                    <div className={`mt-3 p-3 rounded-lg ${
+                      resultadoImportacao.sucesso 
+                        ? 'bg-green-100 text-green-800 border border-green-200' 
+                        : 'bg-red-100 text-red-800 border border-red-200'
+                    }`}>
+                      {resultadoImportacao.sucesso ? (
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            {resultadoImportacao.total} produtos importados com sucesso!
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            Erro: {resultadoImportacao.erro}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-md font-medium text-gray-900 mb-2">Importar Dados</h3>
+                  <h3 className="text-md font-medium text-gray-900 mb-2">Importar Dados Gerais</h3>
                   <p className="text-sm text-gray-600 mb-3">
                     Importe dados do MongoDB para o banco local do aplicativo
                   </p>

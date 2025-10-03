@@ -29,28 +29,45 @@ export function waitForCordovaBluetoothPlugin(): Promise<boolean> {
       return;
     }
 
-    // Aguardar o evento deviceready
+    let attempts = 0;
+    const maxAttempts = 10;
+    const checkInterval = 500;
+
     const checkPlugin = () => {
+      attempts++;
+      
       if ((window as any).bluetoothSerial) {
         resolve(true);
-      } else {
-        // Tentar novamente após um pequeno delay
-        setTimeout(() => {
-          if ((window as any).bluetoothSerial) {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-        }, 1000);
+        return;
       }
+
+      if (attempts >= maxAttempts) {
+        console.warn('Plugin Bluetooth não carregou após múltiplas tentativas');
+        resolve(false);
+        return;
+      }
+
+      // Tentar novamente após um delay
+      setTimeout(checkPlugin, checkInterval);
     };
 
+    // Aguardar o evento deviceready se Cordova estiver disponível
     if ((window as any).cordova) {
-      document.addEventListener('deviceready', checkPlugin, false);
+      document.addEventListener('deviceready', () => {
+        console.log('DeviceReady disparado, verificando plugin Bluetooth...');
+        setTimeout(checkPlugin, 100);
+      }, false);
+      
       // Fallback caso deviceready já tenha sido disparado
-      setTimeout(checkPlugin, 100);
+      setTimeout(() => {
+        if (attempts === 0) {
+          console.log('Iniciando verificação do plugin Bluetooth...');
+          checkPlugin();
+        }
+      }, 100);
     } else {
-      resolve(false);
+      // Se não há Cordova, tentar verificar diretamente
+      setTimeout(checkPlugin, 100);
     }
   });
 }
